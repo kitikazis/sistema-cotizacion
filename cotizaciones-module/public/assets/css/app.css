@@ -1,0 +1,202 @@
+/* Modulo de cotizaciones - enlix.pe */
+
+:root {
+    --azul: #1e40af;
+    --azul-claro: #eff6ff;
+    --texto: #1f2937;
+    --tenue: #6b7280;
+    --borde: #e5e7eb;
+    --fondo: #f9fafb;
+    --verde: #059669;
+    --rojo: #dc2626;
+    --ambar: #b45309;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* --- Barra superior --- */
+.barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 24px;
+    background: #fff;
+    border-bottom: 1px solid var(--borde);
+}
+
+.marca { font-weight: 700; color: var(--azul); text-decoration: none; font-size: 16px; }
+.barra nav { display: flex; align-items: center; gap: 16px; }
+.barra nav a { color: var(--tenue); text-decoration: none; }
+.barra nav a:hover { color: var(--azul); }
+
+/* 1700px porque la tabla de items tiene 18 columnas; con 1400 el Total linea
+   quedaba siempre fuera de pantalla. */
+.contenedor { max-width: 1700px; margin: 24px auto; padding: 0 24px; }
+.pie { text-align: center; color: var(--tenue); padding: 24px; font-size: 12px; }
+
+/* --- Botones --- */
+.btn {
+    display: inline-block;
+    padding: 8px 14px;
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--texto);
+    text-decoration: none;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.btn:hover { background: var(--fondo); }
+.btn-primario { background: var(--azul); border-color: var(--azul); color: #fff; }
+.btn-primario:hover { background: #1e3a8a; }
+.btn-peligro { color: var(--rojo); border-color: #fecaca; }
+.btn-peligro:hover { background: #fef2f2; }
+.btn-sm { padding: 4px 8px; font-size: 12px; }
+
+/* --- Tarjetas --- */
+.tarjeta {
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.tarjeta h2 { margin: 0 0 16px; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--tenue); }
+
+/* --- Formularios --- */
+.grid { display: grid; gap: 14px; }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; color: var(--tenue); }
+
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid var(--borde);
+    border-radius: 5px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--texto);
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
+textarea { resize: vertical; min-height: 70px; }
+
+/* --- Tablas --- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--borde); }
+th { background: var(--fondo); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--tenue); font-weight: 700; white-space: nowrap; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr:hover { background: #fcfcfd; }
+
+.tabla-scroll { overflow-x: auto; position: relative; }
+.tabla-items input, .tabla-items select { padding: 5px 6px; font-size: 12px; min-width: 58px; }
+.tabla-items input[type="checkbox"] { min-width: auto; }
+.tabla-items th, .tabla-items td { padding: 6px 5px; }
+
+/* En pantallas angostas la tabla sigue scrolleando, pero el Total linea y los
+   botones quedan clavados a la derecha: son lo que el vendedor necesita ver
+   mientras escribe. */
+.tabla-items th:last-child,
+.tabla-items td:last-child {
+    position: sticky;
+    right: 0;
+    min-width: 84px;
+    background: #fff;
+    /* z-index alto: sin esto las columnas que pasan por debajo se asoman. */
+    z-index: 3;
+    box-shadow: -6px 0 6px -6px rgba(0, 0, 0, .18);
+}
+.tabla-items th:nth-last-child(2),
+.tabla-items td:nth-last-child(2) {
+    position: sticky;
+    right: 84px;
+    min-width: 84px;
+    background: var(--azul-claro);
+    z-index: 2;
+}
+.tabla-items thead th:last-child,
+.tabla-items thead th:nth-last-child(2) { background: var(--fondo); }
+
+/* ---------------------------------------------------------------
+   Look de hoja de calculo: replica el Bloque 2 del Excel original
+   para que el vendedor reconozca la tabla que ya venia usando.
+   --------------------------------------------------------------- */
+.tabla-excel th {
+    background: #ffff00;
+    color: #1f2937;
+    border: 1px solid #c9c900;
+    text-align: center;
+    text-transform: none;
+    font-size: 10.5px;
+    letter-spacing: 0;
+    vertical-align: middle;
+}
+.tabla-excel td { border: 1px solid var(--borde); text-align: center; }
+.tabla-excel thead th:last-child,
+.tabla-excel thead th:nth-last-child(2) { background: #ffff00; }
+
+/* Fila de leyenda: dice si la columna es Variable, Fija u Opcional. */
+.tabla-excel .reglas td {
+    background: #fffbe6;
+    color: #8a6d00;
+    font-size: 10px;
+    line-height: 1.25;
+    font-style: italic;
+    padding: 4px 3px;
+}
+.tabla-excel .reglas td b { font-style: normal; }
+.tabla-excel .reglas td:last-child,
+.tabla-excel .reglas td:nth-last-child(2) { background: #fffbe6; }
+
+/* Las celdas opcionales llevan el check pegado al monto. */
+.tabla-excel .opcional label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 400;
+    color: inherit;
+    cursor: pointer;
+}
+.tabla-excel .opcional input[type="checkbox"] { margin: 0; cursor: pointer; }
+
+/* Ganancia: el selector arriba, el monto calculado debajo. */
+.tabla-excel td.calculado select { margin-bottom: 3px; }
+
+.calculado { background: var(--azul-claro); color: var(--azul); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+/* --- Avisos --- */
+.aviso { padding: 12px 14px; border-radius: 6px; margin-bottom: 20px; }
+.aviso-error { background: #fef2f2; border: 1px solid #fecaca; color: var(--rojo); }
+.aviso-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: var(--verde); }
+.aviso-info { background: var(--azul-claro); border: 1px solid #bfdbfe; color: var(--azul); }
+
+/* --- Totales --- */
+.totales { margin-left: auto; width: 320px; }
+.totales div { display: flex; justify-content: space-between; padding: 6px 0; }
+.totales .grande { border-top: 2px solid var(--texto); margin-top: 6px; padding-top: 10px; font-size: 17px; font-weight: 700; }
+
+.etiqueta { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--fondo); color: var(--tenue); }
+
+.vacio { text-align: center; padding: 48px 20px; color: var(--tenue); }
+.pista { font-size: 11px; color: var(--tenue); font-weight: 400; }
+
+@media (max-width: 900px) {
+    .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+    .totales { width: 100%; }
+}

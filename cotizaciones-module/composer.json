@@ -1,0 +1,19 @@
+{
+    "name": "enlix/cotizaciones-module",
+    "description": "Modulo de cotizaciones para enlix.pe - PHP MVC vanilla + MySQL + Alpine.js + dompdf",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "dompdf/dompdf": "^3.1"
+    },
+    "autoload": {
+        "classmap": [
+            "helpers/",
+            "models/",
+            "controllers/"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

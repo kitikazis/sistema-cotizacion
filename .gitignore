@@ -1,0 +1,19 @@
+# Dependencias de Composer (se reinstalan con `composer install`)
+/cotizaciones-module/vendor/
+
+# Datos reales del emisor: cuentas bancarias, RUC y contacto.
+# Usar config/empresa.example.php como plantilla.
+/cotizaciones-module/config/empresa.php
+
+# PDFs generados en tiempo de ejecucion
+/cotizaciones-module/storage/*.pdf
+
+# Sistema operativo
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+*.swp

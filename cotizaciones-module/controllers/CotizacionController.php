@@ -1,0 +1,161 @@
+<?php
+
+require_once __DIR__ . '/../models/Cotizacion.php';
+require_once __DIR__ . '/../helpers/funciones.php';
+
+/**
+ * Controlador del modulo de cotizaciones.
+ */
+class CotizacionController
+{
+    /** Listado. */
+    public function index(): void
+    {
+        $cotizaciones = Cotizacion::listar();
+        $this->render('cotizaciones/index', [
+            'cotizaciones' => $cotizaciones,
+            'titulo'       => 'Cotizaciones',
+        ]);
+    }
+
+    /** Formulario de nueva cotizacion. */
+    public function crear(): void
+    {
+        $empresa = configEmpresa();
+
+        $this->render('cotizaciones/crear', [
+            'titulo'         => 'Nueva cotizacion',
+            'numero'         => Cotizacion::siguienteNumero(),
+            'empresaConfig'  => $empresa,
+            'ganancias'      => PricingCalculator::GANANCIAS_PERMITIDAS,
+            'error'          => $_GET['error'] ?? null,
+        ]);
+    }
+
+    /** Procesa el POST del formulario. */
+    public function guardar(): void
+    {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            redirigir(url('crear'));
+        }
+
+        $items = $this->itemsDesdePost($_POST['items'] ?? []);
+
+        if ($items === []) {
+            redirigir(url('crear', ['error' => 'Agrega al menos un item con descripcion.']));
+        }
+
+        if (trim((string) ($_POST['empresa'] ?? '')) === '') {
+            redirigir(url('crear', ['error' => 'La empresa del cliente es obligatoria.']));
+        }
+
+        try {
+            $id = Cotizacion::crear($_POST, $items);
+        } catch (Throwable $e) {
+            redirigir(url('crear', ['error' => 'No se pudo guardar: ' . $e->getMessage()]));
+        }
+
+        redirigir(url('ver', ['id' => $id, 'ok' => 1]));
+    }
+
+    /** Detalle con el desglose completo. */
+    public function ver(): void
+    {
+        $cotizacion = Cotizacion::obtener((int) ($_GET['id'] ?? 0));
+
+        if ($cotizacion === null) {
+            http_response_code(404);
+            exit('Cotizacion no encontrada.');
+        }
+
+        $this->render('cotizaciones/ver', [
+            'titulo'     => 'Cotizacion N° ' . $cotizacion['numero'],
+            'cotizacion' => $cotizacion,
+            'guardada'   => isset($_GET['ok']),
+        ]);
+    }
+
+    /** Descarga del PDF. */
+    public function pdf(): void
+    {
+        $cotizacion = Cotizacion::obtener((int) ($_GET['id'] ?? 0));
+
+        if ($cotizacion === null) {
+            http_response_code(404);
+            exit('Cotizacion no encontrada.');
+        }
+
+        // generar_pdf.php se encarga de dompdf y del stream de salida.
+        $descargar = isset($_GET['descargar']);
+        require_once __DIR__ . '/../pdf/generar_pdf.php';
+        generarPdfCotizacion($cotizacion, $descargar);
+    }
+
+    /** Baja. */
+    public function eliminar(): void
+    {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            Cotizacion::eliminar((int) ($_POST['id'] ?? 0));
+        }
+
+        redirigir(url());
+    }
+
+    /**
+     * Normaliza los items que llegan del formulario.
+     * Descarta filas totalmente vacias (el usuario pudo agregar y no llenar).
+     */
+    private function itemsDesdePost($crudos): array
+    {
+        if (!is_array($crudos)) {
+            return [];
+        }
+
+        $items = [];
+
+        foreach ($crudos as $fila) {
+            if (!is_array($fila)) {
+                continue;
+            }
+
+            $descripcion = trim((string) ($fila['descripcion'] ?? ''));
+
+            // Sin descripcion la linea no significa nada: se ignora.
+            if ($descripcion === '') {
+                continue;
+            }
+
+            $items[] = [
+                'codigo'              => $fila['codigo'] ?? null,
+                'marca'               => $fila['marca'] ?? null,
+                'descripcion'         => $descripcion,
+                'cantidad'            => $fila['cantidad'] ?? 1,
+                'precio'              => $fila['precio'] ?? 0,
+                'licencia_so'         => $fila['licencia_so'] ?? 0,
+                'delivery'            => $fila['delivery'] ?? 0,
+                'embalaje'            => $fila['embalaje'] ?? 0,
+                'envio'               => $fila['envio'] ?? 0,
+                // Los checkbox no marcados simplemente no viajan en el POST.
+                'aplica_detraccion'   => !empty($fila['aplica_detraccion']),
+                'aplica_retencion'    => !empty($fila['aplica_retencion']),
+                'porcentaje_ganancia' => $fila['porcentaje_ganancia'] ?? 0.10,
+            ];
+        }
+
+        return $items;
+    }
+
+    /** Render de vista dentro del layout. */
+    private function render(string $vista, array $datos = []): void
+    {
+        extract($datos, EXTR_SKIP);
+
+        $rutaVista = __DIR__ . '/../views/' . $vista . '.php';
+
+        ob_start();
+        require $rutaVista;
+        $contenido = ob_get_clean();
+
+        require __DIR__ . '/../views/layout.php';
+    }
+}

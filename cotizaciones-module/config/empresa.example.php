@@ -1,10 +1,11 @@
 <?php
 /**
- * PLANTILLA de los datos del emisor.
+ * PLANTILLA de los datos del emisor, solo como referencia de la estructura.
  *
- * Copia este archivo a `empresa.php` y reemplaza los valores por los reales.
- * `empresa.php` esta en .gitignore a proposito: lleva cuentas bancarias y
- * datos de contacto que no deben viajar al repositorio.
+ * Los valores reales de Enlix (razon social, RUC y cuentas Interbank) son
+ * FIJOS y viven en `empresa.php`, que es el archivo que la aplicacion usa.
+ * Esta plantilla nunca se carga sola: si `empresa.php` falta, configEmpresa()
+ * lanza una excepcion en vez de emitir cotizaciones con datos de relleno.
  *
  *     cp config/empresa.example.php config/empresa.php
  */

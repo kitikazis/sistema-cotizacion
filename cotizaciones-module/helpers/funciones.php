@@ -32,18 +32,25 @@ function url(string $accion = '', array $params = []): string
 }
 
 /**
- * Carga los datos del emisor.
+ * Carga los datos del emisor (razon social, RUC, cuentas, firma).
  *
- * config/empresa.php no esta versionado porque lleva cuentas bancarias
- * reales; si todavia no existe (por ejemplo en un clon recien hecho) se
- * usa la plantilla para que la app arranque igual.
+ * Son valores FIJOS de Enlix. Si config/empresa.php no existe se corta la
+ * ejecucion a proposito: caer a la plantilla haria que una cotizacion salga
+ * hacia el cliente con RUC y cuentas bancarias de relleno, que es peor que
+ * no emitirla.
  */
 function configEmpresa(): array
 {
-    $real    = __DIR__ . '/../config/empresa.php';
-    $ejemplo = __DIR__ . '/../config/empresa.example.php';
+    $real = __DIR__ . '/../config/empresa.php';
 
-    return require (is_file($real) ? $real : $ejemplo);
+    if (!is_file($real)) {
+        throw new RuntimeException(
+            'Falta config/empresa.php (razon social, RUC y cuentas del emisor). '
+            . 'Crealo copiando config/empresa.example.php y poniendo los datos reales.'
+        );
+    }
+
+    return require $real;
 }
 
 /** Redirige y corta la ejecucion. */

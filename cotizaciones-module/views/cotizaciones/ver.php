@@ -10,7 +10,7 @@ $simbolo = simboloMoneda((string) $cotizacion['moneda']);
 <?php endif; ?>
 
 <div class="tarjeta">
-    <h2>Cotización N° <?= e($cotizacion['numero']) ?></h2>
+    <h2><?= icono('documento', 15) ?>Cotización N° <?= e($cotizacion['numero']) ?></h2>
 
     <div class="grid grid-4">
         <div><label>Empresa</label><?= e($cotizacion['empresa']) ?></div>
@@ -34,15 +34,16 @@ $simbolo = simboloMoneda((string) $cotizacion['moneda']);
     </div>
 
     <p style="margin-top:20px">
-        <a class="btn btn-primario" href="<?= e(url('pdf', ['id' => $cotizacion['id'], 'descargar' => 1])) ?>">Descargar PDF</a>
-        <a class="btn" href="<?= e(url('pdf', ['id' => $cotizacion['id']])) ?>" target="_blank">Ver PDF en el navegador</a>
-        <a class="btn" href="<?= e(url()) ?>">Volver al listado</a>
+        <a class="btn btn-primario" href="<?= e(url('pdf', ['id' => $cotizacion['id'], 'descargar' => 1])) ?>"><?= icono('descargar') ?> Descargar PDF</a>
+        <a class="btn" href="<?= e(url('editar', ['id' => $cotizacion['id']])) ?>"><?= icono('lapiz') ?> Editar</a>
+        <a class="btn" href="<?= e(url('pdf', ['id' => $cotizacion['id']])) ?>" target="_blank"><?= icono('ojo') ?> Ver PDF en el navegador</a>
+        <a class="btn" href="<?= e(url()) ?>"><?= icono('volver') ?> Volver al listado</a>
     </p>
 </div>
 
 <!-- ============ Desglose interno (Bloque 2 del Excel) ============ -->
 <div class="tarjeta">
-    <h2>Desglose interno <span class="pista">— uso interno, no aparece en el PDF del cliente</span></h2>
+    <h2><?= icono('calculadora', 15) ?>Desglose interno <span class="pista">— uso interno, no aparece en el PDF del cliente</span></h2>
 
     <div class="tabla-scroll">
         <table>
@@ -108,7 +109,7 @@ $simbolo = simboloMoneda((string) $cotizacion['moneda']);
 
 <!-- ============ Vista del cliente (Bloque 1 del Excel) ============ -->
 <div class="tarjeta">
-    <h2>Lo que ve el cliente</h2>
+    <h2><?= icono('ojo', 15) ?>Lo que ve el cliente</h2>
 
     <div class="tabla-scroll">
         <table>

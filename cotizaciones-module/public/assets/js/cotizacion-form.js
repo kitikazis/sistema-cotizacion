@@ -20,7 +20,12 @@ document.addEventListener('alpine:init', () => {
         items: [],
 
         init() {
-            this.agregarItem();
+            // Al editar llegan los items ya guardados; al crear, una fila vacia.
+            if (Array.isArray(config.items) && config.items.length > 0) {
+                this.items = config.items.map((item) => ({ ...this.itemVacio(), ...item }));
+            } else {
+                this.agregarItem();
+            }
         },
 
         itemVacio() {

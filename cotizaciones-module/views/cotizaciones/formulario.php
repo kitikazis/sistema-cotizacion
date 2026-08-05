@@ -1,40 +1,97 @@
 <?php
-/** @var string $numero */
-/** @var array $empresaConfig */
-/** @var array $ganancias */
-/** @var string|null $error */
+/**
+ * Formulario compartido por crear y editar.
+ *
+ * @var array|null $cotizacion  null al crear; con datos al editar
+ * @var string     $numero
+ * @var array      $empresaConfig
+ * @var array      $ganancias
+ * @var string|null $error
+ */
 
-$opciones = $empresaConfig['opciones'];
+$opciones  = $empresaConfig['opciones'];
+$editando  = $cotizacion !== null;
+
+/** Devuelve el valor guardado o el default cuando se esta creando. */
+$val = static function (string $campo, $default = '') use ($cotizacion) {
+    return $cotizacion[$campo] ?? $default;
+};
+
+/** Marca la opcion seleccionada de un select. */
+$sel = static function ($valor, $actual): string {
+    return (string) $valor === (string) $actual ? ' selected' : '';
+};
+
+// Items ya guardados, normalizados a los tipos que espera Alpine.
+$itemsIniciales = [];
+foreach ($cotizacion['items'] ?? [] as $item) {
+    $itemsIniciales[] = [
+        'codigo'              => (string) ($item['codigo'] ?? ''),
+        'marca'               => (string) ($item['marca'] ?? ''),
+        'descripcion'         => (string) $item['descripcion'],
+        'cantidad'            => (float) $item['cantidad'],
+        'precio'              => (float) $item['precio'],
+        'licencia_so'         => (float) $item['licencia_so'],
+        'delivery'            => (float) $item['delivery'],
+        'embalaje'            => (float) $item['embalaje'],
+        'envio'               => (float) $item['envio'],
+        'aplica_detraccion'   => (bool) $item['aplica_detraccion'],
+        'aplica_retencion'    => (bool) $item['aplica_retencion'],
+        'porcentaje_ganancia' => (float) $item['porcentaje_ganancia'],
+    ];
+}
+
+$configAlpine = [
+    'ganancias' => $ganancias,
+    'items'     => $itemsIniciales,
+    'moneda'    => (string) $val('moneda', 'PEN'),
+    'formaPago' => (string) $val('forma_pago', 'contado'),
+];
 ?>
 
 <?php if (!empty($error)): ?>
     <div class="aviso aviso-error"><?= e($error) ?></div>
 <?php endif; ?>
 
-<form method="post" action="<?= e(url('guardar')) ?>"
-      x-data="cotizacionForm({ ganancias: <?= e(json_encode($ganancias)) ?> })">
+<?php if ($editando): ?>
+    <div class="aviso aviso-info">
+        Estás editando la cotización N° <?= e($cotizacion['numero']) ?>.
+        Al guardar se recalculan todos los montos y se reemplazan sus ítems.
+    </div>
+<?php endif; ?>
+
+<form method="post" action="<?= e(url($editando ? 'actualizar' : 'guardar')) ?>"
+      x-data="cotizacionForm(<?= e(json_encode($configAlpine)) ?>)">
+
+    <?php if ($editando): ?>
+        <input type="hidden" name="id" value="<?= (int) $cotizacion['id'] ?>">
+    <?php endif; ?>
 
     <!-- ============ Datos del cliente y condiciones ============ -->
     <div class="tarjeta">
-        <h2>Cotización N° <?= e($numero) ?></h2>
+        <h2><?= icono('documento', 15) ?>Cotización N° <?= e($numero) ?></h2>
         <input type="hidden" name="numero" value="<?= e($numero) ?>">
 
         <div class="grid grid-3">
             <div style="grid-column: span 2">
                 <label for="empresa">Empresa *</label>
-                <input type="text" id="empresa" name="empresa" required placeholder="Razón social del cliente">
+                <input type="text" id="empresa" name="empresa" required
+                       placeholder="Razón social del cliente"
+                       value="<?= e($val('empresa')) ?>">
             </div>
             <div>
                 <label for="ruc">RUC</label>
-                <input type="text" id="ruc" name="ruc" maxlength="11" placeholder="20xxxxxxxxx">
+                <input type="text" id="ruc" name="ruc" maxlength="11" placeholder="20xxxxxxxxx"
+                       value="<?= e($val('ruc')) ?>">
             </div>
             <div style="grid-column: span 2">
                 <label for="direccion">Dirección</label>
-                <input type="text" id="direccion" name="direccion">
+                <input type="text" id="direccion" name="direccion" value="<?= e($val('direccion')) ?>">
             </div>
             <div>
                 <label for="fecha_emision">Fecha de emisión</label>
-                <input type="date" id="fecha_emision" name="fecha_emision" value="<?= e(date('Y-m-d')) ?>">
+                <input type="date" id="fecha_emision" name="fecha_emision"
+                       value="<?= e($val('fecha_emision', date('Y-m-d'))) ?>">
             </div>
         </div>
 
@@ -43,7 +100,7 @@ $opciones = $empresaConfig['opciones'];
                 <label for="validez_dias">Validez de la oferta</label>
                 <select id="validez_dias" name="validez_dias">
                     <?php foreach ($opciones['validez_dias'] as $dias): ?>
-                        <option value="<?= (int) $dias ?>"><?= (int) $dias ?> días</option>
+                        <option value="<?= (int) $dias ?>"<?= $sel($dias, $val('validez_dias', 7)) ?>><?= (int) $dias ?> días</option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -58,7 +115,7 @@ $opciones = $empresaConfig['opciones'];
                 <label for="credito_dias">Días de crédito</label>
                 <select id="credito_dias" name="credito_dias" x-bind:disabled="formaPago !== 'credito'">
                     <?php foreach ($opciones['credito_dias'] as $dias): ?>
-                        <option value="<?= (int) $dias ?>"><?= (int) $dias ?> días</option>
+                        <option value="<?= (int) $dias ?>"<?= $sel($dias, $val('credito_dias', 7)) ?>><?= (int) $dias ?> días</option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -67,7 +124,7 @@ $opciones = $empresaConfig['opciones'];
                 <select id="tiempo_entrega_dias" name="tiempo_entrega_dias">
                     <option value="">—</option>
                     <?php foreach ($opciones['tiempo_entrega_dias'] as $dias): ?>
-                        <option value="<?= (int) $dias ?>"><?= (int) $dias ?> días</option>
+                        <option value="<?= (int) $dias ?>"<?= $sel($dias, $val('tiempo_entrega_dias')) ?>><?= (int) $dias ?> días</option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -84,7 +141,7 @@ $opciones = $empresaConfig['opciones'];
     <!-- ============ Motor de precios, en el orden del Excel ============ -->
     <div class="tarjeta">
         <h2>
-            Ítems
+            <?= icono('calculadora', 15) ?>Ítems
             <span class="pista">— las celdas blancas las escribes tú; las azules se calculan solas</span>
         </h2>
 
@@ -115,11 +172,7 @@ $opciones = $empresaConfig['opciones'];
 
                     <!-- Leyenda: replica las filas 45-51 del Excel -->
                     <tr class="reglas">
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        <td></td><td></td><td></td><td></td><td></td>
                         <td>Variable</td>
                         <td>1.50%<br><b>Fijo</b></td>
                         <td>18%<br><b>Fijo</b></td>
@@ -146,14 +199,11 @@ $opciones = $empresaConfig['opciones'];
                             <td><input type="text" :name="`items[${i}][marca]`" x-model="item.marca"></td>
                             <td><input type="text" :name="`items[${i}][descripcion]`" x-model="item.descripcion" required style="min-width:150px"></td>
 
-                            <!-- Variable -->
                             <td><input type="number" step="any" min="0" :name="`items[${i}][precio]`" x-model="item.precio"></td>
 
-                            <!-- Fijos: solo lectura -->
                             <td class="calculado" x-text="simbolo + ' ' + f(calcular(item).ir)"></td>
                             <td class="calculado" x-text="simbolo + ' ' + f(calcular(item).igv)"></td>
 
-                            <!-- Opcional: el check la activa -->
                             <td class="calculado opcional">
                                 <label>
                                     <input type="checkbox" value="1" :name="`items[${i}][aplica_detraccion]`" x-model="item.aplica_detraccion">
@@ -161,13 +211,11 @@ $opciones = $empresaConfig['opciones'];
                                 </label>
                             </td>
 
-                            <!-- Variables -->
                             <td><input type="number" step="any" min="0" :name="`items[${i}][licencia_so]`" x-model="item.licencia_so"></td>
                             <td><input type="number" step="any" min="0" :name="`items[${i}][delivery]`" x-model="item.delivery"></td>
                             <td><input type="number" step="any" min="0" :name="`items[${i}][embalaje]`" x-model="item.embalaje"></td>
                             <td><input type="number" step="any" min="0" :name="`items[${i}][envio]`" x-model="item.envio"></td>
 
-                            <!-- Ganancia: eliges el % y ves el monto -->
                             <td class="calculado">
                                 <select :name="`items[${i}][porcentaje_ganancia]`" x-model.number="item.porcentaje_ganancia">
                                     <template x-for="g in ganancias" :key="g">
@@ -179,7 +227,6 @@ $opciones = $empresaConfig['opciones'];
 
                             <td class="calculado" x-text="simbolo + ' ' + f(calcular(item).subtotal)"></td>
 
-                            <!-- Opcional -->
                             <td class="calculado opcional">
                                 <label>
                                     <input type="checkbox" value="1" :name="`items[${i}][aplica_retencion]`" x-model="item.aplica_retencion">
@@ -201,10 +248,9 @@ $opciones = $empresaConfig['opciones'];
         </div>
 
         <p style="margin-top:14px">
-            <button type="button" class="btn" @click="agregarItem()">+ Agregar ítem</button>
+            <button type="button" class="btn" @click="agregarItem()"><?= icono('mas') ?> Agregar ítem</button>
         </p>
 
-        <!-- Totales: lo que verá el cliente en el PDF -->
         <div class="totales">
             <div>
                 <span>Subtotal (base imponible)</span>
@@ -227,17 +273,77 @@ $opciones = $empresaConfig['opciones'];
         <div class="grid" style="grid-template-columns:1fr 1fr">
             <div>
                 <label for="observaciones">Observaciones</label>
-                <textarea id="observaciones" name="observaciones"></textarea>
+                <textarea id="observaciones" name="observaciones"><?= e($val('observaciones')) ?></textarea>
             </div>
             <div>
                 <label for="condiciones">Condiciones</label>
-                <textarea id="condiciones" name="condiciones"></textarea>
+                <textarea id="condiciones" name="condiciones"><?= e($val('condiciones')) ?></textarea>
             </div>
         </div>
     </div>
 
+    <!-- ============ Datos del emisor ============ -->
+    <?php
+        $rutaFirmaWeb = $empresaConfig['firma']['imagen'] ?? null;
+        $hayFirma = $rutaFirmaWeb && is_file(__DIR__ . '/../../' . ltrim($rutaFirmaWeb, '/'));
+    ?>
+    <div class="tarjeta">
+        <h2>
+            <?= icono('empresa', 15) ?>Datos del emisor
+            <span class="pista">— vienen precargados; si los cambias, se guardan con esta cotización</span>
+        </h2>
+
+        <div class="grid" style="grid-template-columns:1fr 1.2fr 1fr">
+            <div>
+                <label for="emisor_razon_social">Razón social</label>
+                <input type="text" id="emisor_razon_social" name="emisor_razon_social"
+                       value="<?= e($val('emisor_razon_social') ?: $empresaConfig['razon_social']) ?>">
+
+                <label for="emisor_ruc" style="margin-top:12px">RUC</label>
+                <input type="text" id="emisor_ruc" name="emisor_ruc" maxlength="11"
+                       value="<?= e($val('emisor_ruc') ?: $empresaConfig['ruc']) ?>">
+            </div>
+
+            <div>
+                <label>Cuentas bancarias</label>
+                <?php foreach ($empresaConfig['cuentas'] as $cuenta): ?>
+                    <div class="fijo fijo-fila">
+                        <span><?= e($cuenta['banco']) ?></span>
+                        <strong><?= e($cuenta['numero']) ?></strong>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <div>
+                <label>Firma</label>
+                <div class="fijo fijo-firma">
+                    <?php if ($hayFirma): ?>
+                        <img src="<?= e($rutaFirmaWeb) ?>" alt="Firma" class="firma-preview">
+                    <?php else: ?>
+                        <span class="pista">Sin imagen de firma</span>
+                    <?php endif; ?>
+                    <div class="fijo-linea"></div>
+                    <strong><?= e($empresaConfig['firma']['nombre']) ?></strong><br>
+                    <?= e($empresaConfig['firma']['cargo']) ?><br>
+                    <?= e($empresaConfig['firma']['email']) ?><br>
+                    <?= e($empresaConfig['firma']['celular']) ?>
+                </div>
+            </div>
+        </div>
+
+        <p class="pista" style="margin:14px 0 0">
+            Razón social y RUC se editan aquí y quedan guardados en esta cotización.
+            Para cambiar el valor que viene precargado por defecto —y las cuentas
+            bancarias y la firma— se edita <code>config/empresa.php</code>.
+        </p>
+    </div>
+
     <p>
-        <button type="submit" class="btn btn-primario">Guardar cotización</button>
-        <a class="btn" href="<?= e(url()) ?>">Cancelar</a>
+        <button type="submit" class="btn btn-primario">
+            <?= icono('guardar') ?> <?= $editando ? 'Actualizar cotización' : 'Guardar cotización' ?>
+        </button>
+        <a class="btn" href="<?= e($editando ? url('ver', ['id' => $cotizacion['id']]) : url()) ?>">
+            <?= icono('equis') ?> Cancelar
+        </a>
     </p>
 </form>

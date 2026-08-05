@@ -8,28 +8,95 @@ require_once __DIR__ . '/../helpers/funciones.php';
  */
 class CotizacionController
 {
-    /** Listado. */
+    /** Listado con buscador y filtros. */
     public function index(): void
     {
-        $cotizaciones = Cotizacion::listar();
+        $filtros = [
+            'q'           => trim((string) ($_GET['q'] ?? '')),
+            'fecha_desde' => (string) ($_GET['fecha_desde'] ?? ''),
+            'fecha_hasta' => (string) ($_GET['fecha_hasta'] ?? ''),
+            'estado'      => (string) ($_GET['estado'] ?? ''),
+            'moneda'      => (string) ($_GET['moneda'] ?? ''),
+            'orden'       => (string) ($_GET['orden'] ?? ''),
+            'dir'         => (string) ($_GET['dir'] ?? 'desc'),
+        ];
+
         $this->render('cotizaciones/index', [
-            'cotizaciones' => $cotizaciones,
             'titulo'       => 'Cotizaciones',
+            'cotizaciones' => Cotizacion::listar($filtros),
+            'resumen'      => Cotizacion::resumen($filtros),
+            'filtros'      => $filtros,
+            // Si hay algo filtrado, el panel arranca abierto.
+            'hayFiltros'   => $filtros['q'] !== '' || $filtros['fecha_desde'] !== ''
+                              || $filtros['fecha_hasta'] !== '' || $filtros['estado'] !== ''
+                              || $filtros['moneda'] !== '',
         ]);
     }
 
     /** Formulario de nueva cotizacion. */
     public function crear(): void
     {
-        $empresa = configEmpresa();
-
-        $this->render('cotizaciones/crear', [
-            'titulo'         => 'Nueva cotizacion',
-            'numero'         => Cotizacion::siguienteNumero(),
-            'empresaConfig'  => $empresa,
-            'ganancias'      => PricingCalculator::GANANCIAS_PERMITIDAS,
-            'error'          => $_GET['error'] ?? null,
+        $this->render('cotizaciones/formulario', [
+            'titulo'        => 'Nueva cotizacion',
+            'cotizacion'    => null,
+            'numero'        => Cotizacion::siguienteNumero(),
+            'empresaConfig' => configEmpresa(),
+            'ganancias'     => PricingCalculator::GANANCIAS_PERMITIDAS,
+            'error'         => $_GET['error'] ?? null,
         ]);
+    }
+
+    /** Formulario de edicion, con la cotizacion precargada. */
+    public function editar(): void
+    {
+        $cotizacion = Cotizacion::obtener((int) ($_GET['id'] ?? 0));
+
+        if ($cotizacion === null) {
+            http_response_code(404);
+            exit('Cotizacion no encontrada.');
+        }
+
+        $this->render('cotizaciones/formulario', [
+            'titulo'        => 'Editar cotizacion N° ' . $cotizacion['numero'],
+            'cotizacion'    => $cotizacion,
+            'numero'        => $cotizacion['numero'],
+            'empresaConfig' => configEmpresa(),
+            'ganancias'     => PricingCalculator::GANANCIAS_PERMITIDAS,
+            'error'         => $_GET['error'] ?? null,
+        ]);
+    }
+
+    /** Procesa el POST de la edicion. */
+    public function actualizar(): void
+    {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            redirigir(url());
+        }
+
+        $id = (int) ($_POST['id'] ?? 0);
+
+        if (Cotizacion::obtener($id) === null) {
+            http_response_code(404);
+            exit('Cotizacion no encontrada.');
+        }
+
+        $items = $this->itemsDesdePost($_POST['items'] ?? []);
+
+        if ($items === []) {
+            redirigir(url('editar', ['id' => $id, 'error' => 'Agrega al menos un item con descripcion.']));
+        }
+
+        if (trim((string) ($_POST['empresa'] ?? '')) === '') {
+            redirigir(url('editar', ['id' => $id, 'error' => 'La empresa del cliente es obligatoria.']));
+        }
+
+        try {
+            Cotizacion::actualizar($id, $_POST, $items);
+        } catch (Throwable $e) {
+            redirigir(url('editar', ['id' => $id, 'error' => 'No se pudo actualizar: ' . $e->getMessage()]));
+        }
+
+        redirigir(url('ver', ['id' => $id, 'ok' => 1]));
     }
 
     /** Procesa el POST del formulario. */

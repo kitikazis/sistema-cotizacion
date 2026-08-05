@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/helpers/funciones.php';
+require_once __DIR__ . '/helpers/iconos.php';
 require_once __DIR__ . '/helpers/PricingCalculator.php';
 require_once __DIR__ . '/controllers/CotizacionController.php';
 
@@ -16,7 +17,9 @@ require_once __DIR__ . '/controllers/CotizacionController.php';
 ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
-const ACCIONES_VALIDAS = ['index', 'crear', 'guardar', 'ver', 'pdf', 'eliminar'];
+const ACCIONES_VALIDAS = [
+    'index', 'crear', 'guardar', 'editar', 'actualizar', 'ver', 'pdf', 'eliminar',
+];
 
 $accion = (string) ($_GET['accion'] ?? 'index');
 

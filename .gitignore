@@ -5,6 +5,11 @@
 # Usar config/empresa.example.php como plantilla.
 /cotizaciones-module/config/empresa.php
 
+# Firma escaneada del gerente. Fuera del repo a proposito: con ella se puede
+# falsificar un documento firmado. Se copia a mano en cada instalacion; si
+# falta, el PDF se genera igual pero sin firma.
+/cotizaciones-module/pdf/firma*.png
+
 # PDFs generados en tiempo de ejecucion
 /cotizaciones-module/storage/*.pdf
 

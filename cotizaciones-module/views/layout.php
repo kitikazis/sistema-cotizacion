@@ -17,10 +17,10 @@
 </head>
 <body>
     <header class="barra">
-        <a class="marca" href="<?= e(url()) ?>">Enlix · Cotizaciones</a>
+        <a class="marca" href="<?= e(url()) ?>"><?= icono('calculadora', 18) ?> Enlix · Cotizaciones</a>
         <nav>
-            <a href="<?= e(url()) ?>">Listado</a>
-            <a class="btn btn-primario" href="<?= e(url('crear')) ?>">Nueva cotización</a>
+            <a href="<?= e(url()) ?>"><?= icono('documento', 14) ?> Listado</a>
+            <a class="btn btn-primario" href="<?= e(url('crear')) ?>"><?= icono('mas') ?> Nueva cotización</a>
         </nav>
     </header>
 

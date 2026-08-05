@@ -16,6 +16,10 @@ composer install
 cp config/empresa.example.php config/empresa.php
 # ...y edita razon social, RUC, cuentas y firma
 
+# 3b. Firma escaneada (tampoco viene en el repo, ver .gitignore)
+#     Copiar el PNG a pdf/firma-transparente.png. Si falta, el PDF se
+#     genera igual pero sin firma sobre la linea.
+
 # 4. Servidor
 php -S 127.0.0.1:8010 -t .
 ```
@@ -71,16 +75,40 @@ total final coincide con el que arroja el motor interno.
 ```
 config/database.php     Conexión PDO
 config/empresa.php      Datos del emisor, cuentas bancarias, firma
-database/schema.sql     Esquema (cotizaciones + cotizacion_items)
+database/schema.sql     Esquema (clientes + cotizaciones + cotizacion_items)
+database/migracion_001_clientes.sql   Normalización del cliente
 helpers/PricingCalculator.php   La fórmula
 helpers/funciones.php   Escape, formato de moneda, urls
-models/Cotizacion.php   Acceso a datos
+helpers/iconos.php      Iconos SVG inline
+models/Cliente.php      Maestro de clientes
+models/Cotizacion.php   Acceso a datos, búsqueda y filtros
 controllers/CotizacionController.php
-views/                  Layout + listado + formulario + detalle
+views/                  Layout + listado + formulario (crear/editar) + detalle
 pdf/generar_pdf.php     Documento del cliente con dompdf
 public/assets/          CSS y Alpine.js (local, sin CDN)
 tests/test_pricing.php  Regresión contra el Excel
 ```
+
+## Modelo de datos
+
+```
+clientes 1 ──── N cotizaciones 1 ──── N cotizacion_items
+```
+
+El cliente vive en su propia tabla: corregir un RUC mal escrito arregla todas
+sus cotizaciones de una vez. La cotización solo guarda `cliente_id`.
+
+Sobre una base que venga del esquema viejo (con `empresa`/`ruc`/`direccion`
+dentro de `cotizaciones`), se migra con:
+
+```bash
+C:\xampp\mysql\bin\mysql.exe -u root -h 127.0.0.1 -P 8081 < database/migracion_001_clientes.sql
+```
+
+Lo que **no** se normalizó a propósito: los montos calculados
+(`ir`, `igv`, `subtotal`, `total_linea`, `cliente_total`…) se guardan aunque
+sean derivables. Es deliberado: una cotización emitida no debe cambiar de
+precio si mañana se toca una tasa.
 
 ## Decisiones de implementación
 

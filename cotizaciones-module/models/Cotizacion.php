@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Cliente.php';
 require_once __DIR__ . '/../helpers/PricingCalculator.php';
 
 /**
@@ -21,32 +22,127 @@ class Cotizacion
         'total_unitario', 'total_linea', 'precio_cliente_unitario',
     ];
 
-    /**
-     * Lista cotizaciones con el conteo de items, mas recientes primero.
-     */
-    public static function listar(): array
-    {
-        $sql = 'SELECT c.*, COUNT(i.id) AS items
-                FROM cotizaciones c
-                LEFT JOIN cotizacion_items i ON i.cotizacion_id = c.id
-                GROUP BY c.id
-                ORDER BY c.id DESC';
+    /** Columnas por las que se permite ordenar el listado. */
+    private const ORDENES = [
+        'numero'  => 'c.numero',
+        'fecha'   => 'c.fecha_emision',
+        'cliente' => 'cl.razon_social',
+        'total'   => 'c.cliente_total',
+    ];
 
-        return db()->query($sql)->fetchAll();
+    /**
+     * Lista cotizaciones aplicando filtros de busqueda.
+     *
+     * @param array $filtros q, fecha_desde, fecha_hasta, estado, moneda,
+     *                       orden, dir
+     */
+    public static function listar(array $filtros = []): array
+    {
+        [$where, $params] = self::construirFiltros($filtros);
+
+        $orden = self::ORDENES[$filtros['orden'] ?? ''] ?? 'c.id';
+        $dir   = strtolower($filtros['dir'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
+
+        $sql = "SELECT c.*, cl.razon_social, cl.ruc, cl.direccion,
+                       COUNT(i.id) AS items
+                FROM cotizaciones c
+                JOIN clientes cl ON cl.id = c.cliente_id
+                LEFT JOIN cotizacion_items i ON i.cotizacion_id = c.id
+                {$where}
+                GROUP BY c.id
+                ORDER BY {$orden} {$dir}";
+
+        $stmt = db()->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
     }
 
     /**
-     * Devuelve una cotizacion con sus items, o null si no existe.
+     * Totales del conjunto filtrado, para las tarjetas de resumen.
+     */
+    public static function resumen(array $filtros = []): array
+    {
+        [$where, $params] = self::construirFiltros($filtros);
+
+        $sql = "SELECT COUNT(*) AS cantidad,
+                       COALESCE(SUM(CASE WHEN c.moneda = 'PEN' THEN c.cliente_total END), 0) AS total_pen,
+                       COALESCE(SUM(CASE WHEN c.moneda = 'USD' THEN c.cliente_total END), 0) AS total_usd
+                FROM cotizaciones c
+                JOIN clientes cl ON cl.id = c.cliente_id
+                {$where}";
+
+        $stmt = db()->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetch() ?: ['cantidad' => 0, 'total_pen' => 0, 'total_usd' => 0];
+    }
+
+    /**
+     * Arma el WHERE compartido por listar() y resumen().
+     *
+     * @return array{0: string, 1: array}
+     */
+    private static function construirFiltros(array $filtros): array
+    {
+        $where  = [];
+        $params = [];
+
+        $q = trim((string) ($filtros['q'] ?? ''));
+        if ($q !== '') {
+            // Tres placeholders distintos con el mismo valor: con prepares
+            // nativos (EMULATE_PREPARES = false) MySQL no permite repetir un
+            // parametro con nombre dentro de la misma consulta.
+            $where[] = '(cl.razon_social LIKE :q_razon OR cl.ruc LIKE :q_ruc OR c.numero LIKE :q_numero)';
+            $patron = '%' . $q . '%';
+            $params[':q_razon']  = $patron;
+            $params[':q_ruc']    = $patron;
+            $params[':q_numero'] = $patron;
+        }
+
+        if (!empty($filtros['fecha_desde'])) {
+            $where[] = 'c.fecha_emision >= :fecha_desde';
+            $params[':fecha_desde'] = $filtros['fecha_desde'];
+        }
+
+        if (!empty($filtros['fecha_hasta'])) {
+            $where[] = 'c.fecha_emision <= :fecha_hasta';
+            $params[':fecha_hasta'] = $filtros['fecha_hasta'];
+        }
+
+        if (!empty($filtros['estado'])) {
+            $where[] = 'c.estado = :estado';
+            $params[':estado'] = $filtros['estado'];
+        }
+
+        if (!empty($filtros['moneda'])) {
+            $where[] = 'c.moneda = :moneda';
+            $params[':moneda'] = $filtros['moneda'];
+        }
+
+        return [$where === [] ? '' : 'WHERE ' . implode(' AND ', $where), $params];
+    }
+
+    /**
+     * Devuelve una cotizacion con su cliente y sus items, o null.
      */
     public static function obtener(int $id): ?array
     {
-        $stmt = db()->prepare('SELECT * FROM cotizaciones WHERE id = ?');
+        $stmt = db()->prepare(
+            'SELECT c.*, cl.razon_social, cl.ruc, cl.direccion
+             FROM cotizaciones c
+             JOIN clientes cl ON cl.id = c.cliente_id
+             WHERE c.id = ?'
+        );
         $stmt->execute([$id]);
         $cotizacion = $stmt->fetch();
 
         if (!$cotizacion) {
             return null;
         }
+
+        // Alias para que las vistas y el PDF sigan hablando de "empresa".
+        $cotizacion['empresa'] = $cotizacion['razon_social'];
 
         $stmt = db()->prepare(
             'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? ORDER BY linea ASC'
@@ -75,8 +171,6 @@ class Cotizacion
     /**
      * Crea una cotizacion con sus items dentro de una transaccion.
      *
-     * @param array $datos Cabecera cruda del formulario.
-     * @param array $items Items crudos del formulario.
      * @return int Id de la cotizacion creada.
      */
     public static function crear(array $datos, array $items): int
@@ -85,7 +179,6 @@ class Cotizacion
             throw new InvalidArgumentException('La cotizacion necesita al menos un item.');
         }
 
-        // Recalculo autoritativo en servidor.
         $resultado = PricingCalculator::calcularCotizacion($items);
         $totales   = $resultado['totales'];
 
@@ -93,41 +186,23 @@ class Cotizacion
         $pdo->beginTransaction();
 
         try {
+            $clienteId = Cliente::obtenerOCrear($datos);
+
             $sql = 'INSERT INTO cotizaciones
-                        (numero, empresa, ruc, direccion, fecha_emision, validez_dias,
-                         forma_pago, credito_dias, tiempo_entrega_dias, moneda,
-                         observaciones, condiciones,
+                        (numero, cliente_id, emisor_razon_social, emisor_ruc,
+                         fecha_emision, validez_dias, forma_pago, credito_dias,
+                         tiempo_entrega_dias, moneda, observaciones, condiciones,
                          total_general, cliente_subtotal, cliente_igv, cliente_total, estado)
                     VALUES
-                        (:numero, :empresa, :ruc, :direccion, :fecha_emision, :validez_dias,
-                         :forma_pago, :credito_dias, :tiempo_entrega_dias, :moneda,
-                         :observaciones, :condiciones,
+                        (:numero, :cliente_id, :emisor_razon_social, :emisor_ruc,
+                         :fecha_emision, :validez_dias, :forma_pago, :credito_dias,
+                         :tiempo_entrega_dias, :moneda, :observaciones, :condiciones,
                          :total_general, :cliente_subtotal, :cliente_igv, :cliente_total, :estado)';
 
-            $formaPago = ($datos['forma_pago'] ?? 'contado') === 'credito' ? 'credito' : 'contado';
-
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':numero'              => $datos['numero'] ?? self::siguienteNumero(),
-                ':empresa'             => trim((string) ($datos['empresa'] ?? '')),
-                ':ruc'                 => self::nullSiVacio($datos['ruc'] ?? null),
-                ':direccion'           => self::nullSiVacio($datos['direccion'] ?? null),
-                ':fecha_emision'       => $datos['fecha_emision'] ?: date('Y-m-d'),
-                ':validez_dias'        => (int) ($datos['validez_dias'] ?? 7),
-                ':forma_pago'          => $formaPago,
-                // El credito_dias solo tiene sentido si la forma de pago es credito.
-                ':credito_dias'        => $formaPago === 'credito'
-                                            ? (int) ($datos['credito_dias'] ?? 7)
-                                            : null,
-                ':tiempo_entrega_dias' => self::nullSiVacio($datos['tiempo_entrega_dias'] ?? null),
-                ':moneda'              => ($datos['moneda'] ?? 'PEN') === 'USD' ? 'USD' : 'PEN',
-                ':observaciones'       => self::nullSiVacio($datos['observaciones'] ?? null),
-                ':condiciones'         => self::nullSiVacio($datos['condiciones'] ?? null),
-                ':total_general'       => self::dec($totales['total_general']),
-                ':cliente_subtotal'    => self::dec($totales['cliente_subtotal']),
-                ':cliente_igv'         => self::dec($totales['cliente_igv']),
-                ':cliente_total'       => self::dec($totales['cliente_total']),
-                ':estado'              => $datos['estado'] ?? 'borrador',
+            $stmt->execute(self::parametrosCabecera($datos, $totales, $clienteId) + [
+                ':numero' => $datos['numero'] ?? self::siguienteNumero(),
+                ':estado' => $datos['estado'] ?? 'borrador',
             ]);
 
             $cotizacionId = (int) $pdo->lastInsertId();
@@ -141,6 +216,90 @@ class Cotizacion
             $pdo->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Actualiza una cotizacion existente.
+     *
+     * Los items se reemplazan por completo: es mas simple y seguro que
+     * intentar casar cual fila cambio, y como todo se recalcula igual no
+     * hay nada que preservar de las filas viejas.
+     */
+    public static function actualizar(int $id, array $datos, array $items): void
+    {
+        if ($items === []) {
+            throw new InvalidArgumentException('La cotizacion necesita al menos un item.');
+        }
+
+        $resultado = PricingCalculator::calcularCotizacion($items);
+        $totales   = $resultado['totales'];
+
+        $pdo = db();
+        $pdo->beginTransaction();
+
+        try {
+            $clienteId = Cliente::obtenerOCrear($datos);
+
+            $sql = 'UPDATE cotizaciones SET
+                        cliente_id          = :cliente_id,
+                        emisor_razon_social = :emisor_razon_social,
+                        emisor_ruc          = :emisor_ruc,
+                        fecha_emision       = :fecha_emision,
+                        validez_dias        = :validez_dias,
+                        forma_pago          = :forma_pago,
+                        credito_dias        = :credito_dias,
+                        tiempo_entrega_dias = :tiempo_entrega_dias,
+                        moneda              = :moneda,
+                        observaciones       = :observaciones,
+                        condiciones         = :condiciones,
+                        total_general       = :total_general,
+                        cliente_subtotal    = :cliente_subtotal,
+                        cliente_igv         = :cliente_igv,
+                        cliente_total       = :cliente_total
+                    WHERE id = :id';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute(self::parametrosCabecera($datos, $totales, $clienteId) + [':id' => $id]);
+
+            $borrar = $pdo->prepare('DELETE FROM cotizacion_items WHERE cotizacion_id = ?');
+            $borrar->execute([$id]);
+
+            self::insertarItems($pdo, $id, $resultado['items']);
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Parametros comunes al INSERT y al UPDATE de la cabecera.
+     */
+    private static function parametrosCabecera(array $datos, array $totales, int $clienteId): array
+    {
+        $formaPago = ($datos['forma_pago'] ?? 'contado') === 'credito' ? 'credito' : 'contado';
+
+        return [
+            ':cliente_id'          => $clienteId,
+            ':emisor_razon_social' => self::nullSiVacio($datos['emisor_razon_social'] ?? null),
+            ':emisor_ruc'          => self::nullSiVacio($datos['emisor_ruc'] ?? null),
+            ':fecha_emision'       => $datos['fecha_emision'] ?: date('Y-m-d'),
+            ':validez_dias'        => (int) ($datos['validez_dias'] ?? 7),
+            ':forma_pago'          => $formaPago,
+            // credito_dias solo tiene sentido si la forma de pago es credito.
+            ':credito_dias'        => $formaPago === 'credito'
+                                        ? (int) ($datos['credito_dias'] ?? 7)
+                                        : null,
+            ':tiempo_entrega_dias' => self::nullSiVacio($datos['tiempo_entrega_dias'] ?? null),
+            ':moneda'              => ($datos['moneda'] ?? 'PEN') === 'USD' ? 'USD' : 'PEN',
+            ':observaciones'       => self::nullSiVacio($datos['observaciones'] ?? null),
+            ':condiciones'         => self::nullSiVacio($datos['condiciones'] ?? null),
+            ':total_general'       => self::dec($totales['total_general']),
+            ':cliente_subtotal'    => self::dec($totales['cliente_subtotal']),
+            ':cliente_igv'         => self::dec($totales['cliente_igv']),
+            ':cliente_total'       => self::dec($totales['cliente_total']),
+        ];
     }
 
     /**
@@ -179,6 +338,7 @@ class Cotizacion
 
     /**
      * Elimina una cotizacion (los items caen por ON DELETE CASCADE).
+     * El cliente se conserva: puede tener otras cotizaciones.
      */
     public static function eliminar(int $id): bool
     {

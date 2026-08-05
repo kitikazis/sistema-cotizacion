@@ -81,7 +81,7 @@ body {
 
 label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; color: var(--tenue); }
 
-input[type="text"], input[type="number"], input[type="date"], select, textarea {
+input[type="text"], input[type="number"], input[type="date"], input[type="search"], select, textarea {
     width: 100%;
     padding: 7px 9px;
     border: 1px solid var(--borde);
@@ -92,6 +92,7 @@ input[type="text"], input[type="number"], input[type="date"], select, textarea {
     color: var(--texto);
 }
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
+input[type="search"]::-webkit-search-cancel-button { cursor: pointer; }
 textarea { resize: vertical; min-height: 70px; }
 
 /* --- Tablas --- */
@@ -195,6 +196,133 @@ tbody tr:hover { background: #fcfcfd; }
 
 .vacio { text-align: center; padding: 48px 20px; color: var(--tenue); }
 .pista { font-size: 11px; color: var(--tenue); font-weight: 400; }
+
+/* Valores fijos del emisor: se ven, pero se nota que no son editables. */
+.fijo {
+    padding: 7px 9px;
+    background: var(--fondo);
+    border: 1px dashed var(--borde);
+    border-radius: 5px;
+    font-size: 13px;
+    color: var(--texto);
+}
+.fijo + .fijo { margin-top: 6px; }
+.fijo-fila { display: flex; justify-content: space-between; gap: 10px; }
+.fijo-fila strong { font-variant-numeric: tabular-nums; }
+.fijo-firma { line-height: 1.45; }
+.firma-preview { display: block; max-height: 56px; margin-bottom: 2px; }
+.fijo-linea { border-top: 1px solid var(--texto); margin: 0 0 6px; }
+code { background: var(--fondo); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+
+/* =====================================================================
+   Iconos
+   ===================================================================== */
+.ico { vertical-align: -0.18em; flex-shrink: 0; }
+.ico-tenue { color: var(--tenue); }
+.ico-vacio { color: #cbd5e1; margin-bottom: 10px; }
+.btn .ico { margin-right: 5px; }
+.btn .ico:only-child { margin-right: 0; }
+label .ico { margin-right: 3px; vertical-align: -0.15em; }
+h2 .ico { margin-right: 6px; color: var(--azul); vertical-align: -0.15em; }
+.con-ico { display: inline-flex; align-items: center; gap: 6px; }
+[x-cloak] { display: none !important; }
+
+/* Botones que son solo un icono, para la columna de acciones. */
+.acciones { display: flex; align-items: center; gap: 4px; }
+.acciones form { display: inline-flex; margin: 0; }
+.btn-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--borde);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--tenue);
+    cursor: pointer;
+    text-decoration: none;
+    padding: 0;
+}
+.btn-ico:hover { background: var(--azul-claro); color: var(--azul); border-color: #bfdbfe; }
+.btn-ico-peligro:hover { background: #fef2f2; color: var(--rojo); border-color: #fecaca; }
+.btn-activo { background: var(--azul-claro); border-color: #bfdbfe; color: var(--azul); }
+
+/* =====================================================================
+   Tarjetas de resumen
+   ===================================================================== */
+.tarjetas-resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.resumen {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+.resumen-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--azul-claro);
+    color: var(--azul);
+}
+.resumen-valor { display: block; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.resumen-etq { display: block; font-size: 11px; color: var(--tenue); }
+
+/* =====================================================================
+   Buscador y filtros
+   ===================================================================== */
+.barra-busqueda { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.campo-busqueda { position: relative; flex: 1; min-width: 260px; }
+.campo-busqueda .icono-campo {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--tenue);
+    pointer-events: none;
+    display: flex;
+}
+.campo-busqueda input { padding-left: 32px; }
+
+.panel-filtros {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--borde);
+}
+/* Punto que avisa que hay filtros activos. */
+.punto {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--azul);
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+/* Encabezados ordenables */
+.orden { color: inherit; text-decoration: none; display: inline-block; }
+.orden:hover { color: var(--azul); }
+
+.tabla-listado td { padding: 9px 8px; }
+.mono { font-variant-numeric: tabular-nums; }
+
+/* Estados */
+.etiqueta-borrador  { background: #f1f5f9; color: #475569; }
+.etiqueta-emitida   { background: var(--azul-claro); color: var(--azul); }
+.etiqueta-aceptada  { background: #ecfdf5; color: var(--verde); }
+.etiqueta-rechazada { background: #fef2f2; color: var(--rojo); }
 
 @media (max-width: 900px) {
     .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }

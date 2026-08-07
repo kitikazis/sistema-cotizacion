@@ -9,9 +9,11 @@
 # Dependencias de Composer (se reinstalan con `composer install`)
 /vendor/
 
-# Datos reales del emisor: cuentas bancarias, RUC y contacto.
-# Usar config/empresa.example.php como plantilla.
-/config/empresa.php
+# config/empresa.php SI se versiona, por pedido expreso: son datos fijos de
+# Enlix y asi vienen por defecto en cada despliegue sin configurar nada.
+# Ojo: el repositorio es publico, de modo que las cuentas bancarias, el
+# correo y el celular del gerente quedan visibles. Para revertirlo, volver
+# a ignorarlo aqui y ejecutar: git rm --cached config/empresa.php
 
 # Firma escaneada del gerente. Fuera del repo a proposito: con ella se puede
 # falsificar un documento firmado. Se copia a mano en cada instalacion; si

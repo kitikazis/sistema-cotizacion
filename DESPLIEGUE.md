@@ -120,22 +120,15 @@ porque las claves foráneas dependen de las tablas anteriores.
 
 ## Paso 5 — Archivos que no vienen en el repositorio
 
-Tres archivos quedan fuera de git a propósito. Los dos primeros se crean en la
-Terminal; la firma se sube por el Administrador de archivos.
+Solo dos cosas quedan fuera de git: el `.env` (paso 3) y la firma escaneada.
 
-```bash
-cd ~/cotizacion.enlix.pe
+Los **datos del emisor** —razón social, RUC, cuentas bancarias y firma— sí
+vienen en el repositorio, en `config/empresa.php`, y llegan cargados con el
+`git pull`. No hay que configurarlos.
 
-# Credenciales de la base
-cp config/credenciales.example.php config/credenciales.php
-nano config/credenciales.php     # poner base, usuario y clave del paso 4
-
-# Datos del emisor: razon social, RUC, cuentas y firma
-cp config/empresa.example.php config/empresa.php
-nano config/empresa.php          # poner los datos reales de Enlix
-```
-
-En `nano`: se edita, se guarda con **Ctrl+O**, Enter, y se sale con **Ctrl+X**.
+Para cambiarlos se edita ese archivo, se commitea y se hace `git pull` en el
+servidor. La razón social y el RUC además se pueden sobrescribir por
+cotización desde el propio formulario.
 
 La **firma escaneada** se sube con cPanel → Administrador de archivos a:
 
@@ -152,7 +145,7 @@ Si falta, el PDF se genera igual pero sin firma sobre la línea.
 ```bash
 cd ~/cotizacion.enlix.pe
 mkdir -p storage && chmod 755 storage
-chmod 600 config/credenciales.php config/empresa.php
+chmod 600 .env
 ```
 
 ---

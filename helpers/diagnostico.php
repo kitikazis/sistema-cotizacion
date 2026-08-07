@@ -20,7 +20,14 @@ const TABLAS_ESPERADAS = ['clientes', 'cotizaciones', 'cotizacion_items', 'usuar
  */
 function explicarErrorBd(Throwable $e): string
 {
-    $codigo = $e instanceof PDOException ? ($e->errorInfo[1] ?? 0) : 0;
+    // Lo que no venga del driver lo escribimos nosotros (por ejemplo, que
+    // falta config/credenciales.php): ese texto es seguro de mostrar y es
+    // justo el que hace falta leer para arreglarlo.
+    if (!$e instanceof PDOException) {
+        return $e->getMessage();
+    }
+
+    $codigo = $e->errorInfo[1] ?? 0;
     $texto  = $e->getMessage();
 
     // El SQLSTATE no siempre trae errorInfo (p. ej. si falla al resolver

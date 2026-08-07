@@ -131,10 +131,13 @@ function verificarSistema(): array
             ],
             [
                 'ok'      => is_file($raiz . '/pdf/firma-transparente.png'),
+                // No impide operar: el PDF sale igual, solo que sin firma
+                // sobre la linea. Por eso no tumba el estado general.
+                'critico' => false,
                 'nombre'  => 'Firma escaneada',
                 'detalle' => is_file($raiz . '/pdf/firma-transparente.png')
                     ? 'presente'
-                    : 'falta: el PDF saldrá sin firma (no es bloqueante)',
+                    : 'falta: el PDF saldrá sin firma sobre la línea',
             ],
             [
                 'ok'      => is_dir($raiz . '/vendor'),
@@ -220,16 +223,50 @@ function verificarSistema(): array
     return $bloques;
 }
 
-/** ¿Pasaron todas las comprobaciones? */
+/**
+ * ¿Esta operativo el sistema?
+ *
+ * Solo miran las comprobaciones criticas. Una verificacion marcada con
+ * 'critico' => false es un aviso: conviene resolverla, pero la aplicacion
+ * funciona igual. Sin esta distincion, un detalle menor como la firma
+ * faltante devolvia un 503 y cualquier monitor externo daria el sitio por
+ * caido estando sano.
+ */
 function sistemaCorrecto(array $bloques): bool
 {
     foreach ($bloques as $bloque) {
         foreach ($bloque['verificaciones'] as $v) {
-            if (!$v['ok']) {
+            if (!$v['ok'] && ($v['critico'] ?? true)) {
                 return false;
             }
         }
     }
 
     return true;
+}
+
+/** Cuantas comprobaciones no criticas quedaron sin pasar. */
+function contarAvisos(array $bloques): int
+{
+    $avisos = 0;
+
+    foreach ($bloques as $bloque) {
+        foreach ($bloque['verificaciones'] as $v) {
+            if (!$v['ok'] && ($v['critico'] ?? true) === false) {
+                $avisos++;
+            }
+        }
+    }
+
+    return $avisos;
+}
+
+/** Clasifica una verificacion: 'si' | 'aviso' | 'no'. */
+function estadoVerificacion(array $v): string
+{
+    if ($v['ok']) {
+        return 'si';
+    }
+
+    return ($v['critico'] ?? true) ? 'no' : 'aviso';
 }

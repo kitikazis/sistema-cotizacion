@@ -377,8 +377,9 @@ h2 .ico { margin-right: 6px; color: var(--azul); vertical-align: -0.15em; }
 .tabla-estado td { padding: 8px 6px; border-bottom: 1px solid var(--borde); vertical-align: top; }
 .tabla-estado tr:last-child td { border-bottom: none; }
 .estado-ico { width: 24px; }
-.estado-ico.si { color: var(--verde); }
-.estado-ico.no { color: var(--rojo); }
+.estado-ico.si    { color: var(--verde); }
+.estado-ico.aviso { color: var(--ambar); }
+.estado-ico.no    { color: var(--rojo); }
 .estado-nombre { width: 34%; font-weight: 600; }
 .estado-detalle { color: var(--tenue); font-size: 12.5px; }
 

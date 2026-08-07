@@ -26,14 +26,22 @@
 
     <main class="contenedor" style="max-width:820px">
 
+        <?php $avisos = contarAvisos($bloques); ?>
+
         <div class="estado-cabecera <?= $todoBien ? 'estado-ok' : 'estado-mal' ?>">
             <?= icono($todoBien ? 'check' : 'alerta', 26) ?>
             <div>
                 <strong><?= $todoBien ? 'Todo funcionando' : 'Hay problemas por resolver' ?></strong>
                 <span>
-                    <?= $todoBien
-                        ? 'La base responde y el sistema está listo para usarse.'
-                        : 'Revisa abajo lo que está en rojo.' ?>
+                    <?php if (!$todoBien): ?>
+                        Revisa abajo lo que está en rojo.
+                    <?php elseif ($avisos > 0): ?>
+                        La base responde y el sistema está listo para usarse.
+                        Hay <?= $avisos ?> <?= $avisos === 1 ? 'aviso' : 'avisos' ?> en ámbar:
+                        no impiden operar.
+                    <?php else: ?>
+                        La base responde y el sistema está listo para usarse.
+                    <?php endif; ?>
                 </span>
             </div>
         </div>
@@ -44,9 +52,13 @@
 
                 <table class="tabla-estado">
                     <?php foreach ($bloque['verificaciones'] as $v): ?>
+                        <?php
+                            $clase = estadoVerificacion($v);
+                            $ico   = ['si' => 'check', 'aviso' => 'alerta', 'no' => 'equis'][$clase];
+                        ?>
                         <tr>
-                            <td class="estado-ico <?= $v['ok'] ? 'si' : 'no' ?>">
-                                <?= icono($v['ok'] ? 'check' : 'equis', 15) ?>
+                            <td class="estado-ico <?= $clase ?>">
+                                <?= icono($ico, 15) ?>
                             </td>
                             <td class="estado-nombre"><?= e($v['nombre']) ?></td>
                             <td class="estado-detalle"><?= e($v['detalle']) ?></td>

@@ -67,26 +67,33 @@ if ($comando === 'estado') {
     require_once $raiz . '/helpers/diagnostico.php';
 
     $bloques = verificarSistema();
-    $fallos  = 0;
 
     foreach ($bloques as $bloque) {
         echo PHP_EOL . '=== ' . $bloque['titulo'] . ' ===' . PHP_EOL;
 
         foreach ($bloque['verificaciones'] as $v) {
-            if (!$v['ok']) {
-                $fallos++;
-            }
+            $etiqueta = ['si' => 'ok', 'aviso' => 'AVISO', 'no' => 'FALLA'][estadoVerificacion($v)];
 
-            printf("  %-5s %-32s %s%s", $v['ok'] ? 'ok' : 'FALLA', $v['nombre'], $v['detalle'], PHP_EOL);
+            printf("  %-5s %-32s %s%s", $etiqueta, $v['nombre'], $v['detalle'], PHP_EOL);
         }
     }
 
-    echo PHP_EOL;
-    echo $fallos === 0
-        ? 'Todo funcionando.' . PHP_EOL
-        : "{$fallos} punto(s) por resolver." . PHP_EOL;
+    $correcto = sistemaCorrecto($bloques);
+    $avisos   = contarAvisos($bloques);
 
-    exit($fallos === 0 ? 0 : 1);
+    echo PHP_EOL;
+
+    if (!$correcto) {
+        echo 'Hay puntos criticos por resolver.' . PHP_EOL;
+    } elseif ($avisos > 0) {
+        printf('Todo funcionando, con %d aviso(s) que no impiden operar.%s', $avisos, PHP_EOL);
+    } else {
+        echo 'Todo funcionando.' . PHP_EOL;
+    }
+
+    // Solo lo critico define el codigo de salida, para que un monitor no
+    // de el sitio por caido por un detalle menor.
+    exit($correcto ? 0 : 1);
 }
 
 // ---------------------------------------------------------------------

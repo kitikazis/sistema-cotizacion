@@ -2,16 +2,16 @@
 # cotizaciones-module/ a la raiz para que index.php quede en el document
 # root del subdominio en cPanel.
 
+# Configuracion del entorno: lleva la clave de la base de datos y el
+# interruptor del acceso sin login. Usar .env.example como plantilla.
+/.env
+
 # Dependencias de Composer (se reinstalan con `composer install`)
 /vendor/
 
 # Datos reales del emisor: cuentas bancarias, RUC y contacto.
 # Usar config/empresa.example.php como plantilla.
 /config/empresa.php
-
-# Credenciales de la base de datos de produccion.
-# Usar config/credenciales.example.php como plantilla.
-/config/credenciales.php
 
 # Firma escaneada del gerente. Fuera del repo a proposito: con ella se puede
 # falsificar un documento firmado. Se copia a mano en cada instalacion; si

@@ -2,17 +2,15 @@
 /**
  * Conexion PDO a MySQL/MariaDB.
  *
- * Las credenciales cambian segun donde corra:
- *   local      XAMPP, MariaDB en el puerto 8081 (el 3306 lo ocupa un
- *              MySQL 8.0 standalone instalado aparte).
- *   produccion cPanel, MySQL local en 3306. El usuario y la base llevan
- *              el prefijo de la cuenta cPanel, p.ej. enlixpe_cotizador.
+ * Los datos salen del .env de la raiz (ver .env.example). Ese archivo no
+ * se versiona porque lleva la clave.
  *
- * En produccion las credenciales se leen de config/credenciales.php, que
- * NO va al repositorio. Si falta, se corta con un mensaje claro en vez de
- * intentar conectar con datos de ejemplo.
+ * En desarrollo, si no hay .env, se usan los valores de XAMPP de esta
+ * maquina: MariaDB escucha en el 8081 porque el 3306 lo ocupa un MySQL
+ * 8.0 standalone instalado aparte.
  */
 
+require_once __DIR__ . '/../helpers/env.php';
 require_once __DIR__ . '/../helpers/funciones.php';
 
 /**
@@ -20,28 +18,40 @@ require_once __DIR__ . '/../helpers/funciones.php';
  */
 function configBaseDatos(): array
 {
-    if (!esProduccion()) {
+    if (hayEnv()) {
+        $base = env('DB_NAME');
+
+        if ($base === null) {
+            throw new RuntimeException(
+                'El archivo .env existe pero no define DB_NAME. '
+                . 'Compáralo con .env.example y completa las variables DB_*.'
+            );
+        }
+
         return [
-            'host'   => '127.0.0.1',
-            'puerto' => 8081,
-            'base'   => 'enlix_cotizaciones',
-            'usuario'=> 'root',
-            'clave'  => '',
+            'host'    => (string) env('DB_HOST', 'localhost'),
+            'puerto'  => (int) env('DB_PORT', 3306),
+            'base'    => (string) $base,
+            'usuario' => (string) env('DB_USER', ''),
+            'clave'   => (string) env('DB_PASS', ''),
         ];
     }
 
-    $archivo = __DIR__ . '/credenciales.php';
-
-    if (!is_file($archivo)) {
-        // Se lanza en vez de cortar: asi la pantalla de estado puede
-        // capturarlo y explicarlo, en lugar de morir con un texto pelado.
+    if (esProduccion()) {
         throw new RuntimeException(
-            'Falta config/credenciales.php con los datos de la base de datos '
-            . 'de produccion. Copiar config/credenciales.example.php y completarlo.'
+            'Falta el archivo .env con los datos de la base de datos. '
+            . 'Copiar .env.example a .env y completarlo.'
         );
     }
 
-    return require $archivo;
+    // Desarrollo sin .env: XAMPP de esta maquina.
+    return [
+        'host'    => '127.0.0.1',
+        'puerto'  => 8081,
+        'base'    => 'enlix_cotizaciones',
+        'usuario' => 'root',
+        'clave'   => '',
+    ];
 }
 
 /**

@@ -15,10 +15,16 @@
 # ---------------------------------------------------------------------
 RedirectMatch 404 ^/(config|database|models|controllers|helpers|tests|vendor|storage|pdf)(/|$)
 
-# Archivos sueltos que tampoco deben salir
-RedirectMatch 404 ^/(composer\.(json|lock)|README\.md|\.git)
+# Archivos sueltos que tampoco deben salir.
+# El .env es el mas critico: lleva la clave de la base de datos.
+RedirectMatch 404 ^/(composer\.(json|lock)|README\.md|\.git|\.env)
 
 <FilesMatch "\.(sql|md|lock|ini|log|bak|example\.php)$">
+    Require all denied
+</FilesMatch>
+
+# Doble candado sobre el .env, por si mod_alias no estuviera disponible.
+<FilesMatch "^\.env">
     Require all denied
 </FilesMatch>
 

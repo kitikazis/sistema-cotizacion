@@ -63,11 +63,19 @@ function redirigir(string $destino): void
 /**
  * ¿Estamos en el servidor de produccion?
  *
- * Se decide por el host: en local se entra por 127.0.0.1 o localhost.
+ * Manda APP_ENV del .env. Si no esta definida se adivina por el host.
  * Ante la duda devuelve true, que es el lado seguro (errores ocultos).
  */
 function esProduccion(): bool
 {
+    require_once __DIR__ . '/env.php';
+
+    $declarado = env('APP_ENV');
+
+    if (is_string($declarado) && $declarado !== '') {
+        return !in_array(strtolower($declarado), ['local', 'dev', 'development'], true);
+    }
+
     $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
 
     if ($host === '') {

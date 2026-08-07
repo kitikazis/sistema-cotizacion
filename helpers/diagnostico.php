@@ -8,6 +8,8 @@
  */
 
 require_once __DIR__ . '/funciones.php';
+require_once __DIR__ . '/env.php';
+require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../config/database.php';
 
 const TABLAS_ESPERADAS = ['clientes', 'cotizaciones', 'cotizacion_items', 'usuarios'];
@@ -21,8 +23,8 @@ const TABLAS_ESPERADAS = ['clientes', 'cotizaciones', 'cotizacion_items', 'usuar
 function explicarErrorBd(Throwable $e): string
 {
     // Lo que no venga del driver lo escribimos nosotros (por ejemplo, que
-    // falta config/credenciales.php): ese texto es seguro de mostrar y es
-    // justo el que hace falta leer para arreglarlo.
+    // falta el .env): ese texto es seguro de mostrar y es justo el que
+    // hace falta leer para arreglarlo.
     if (!$e instanceof PDOException) {
         return $e->getMessage();
     }
@@ -33,15 +35,16 @@ function explicarErrorBd(Throwable $e): string
     // El SQLSTATE no siempre trae errorInfo (p. ej. si falla al resolver
     // el host), asi que tambien se mira el texto.
     if ($codigo === 1045 || str_contains($texto, 'Access denied for user')) {
-        return 'Usuario o contraseña incorrectos. Revisa "usuario" y "clave" '
-             . 'en config/credenciales.php, y que el usuario esté asignado a '
-             . 'la base con todos los privilegios.';
+        return 'Usuario o contraseña incorrectos. Revisa DB_USER y DB_PASS '
+             . 'en el .env, y que el usuario esté asignado a la base con '
+             . 'todos los privilegios. Si la clave lleva "=" o "#", ponla '
+             . 'entre comillas.';
     }
 
     if ($codigo === 1049 || str_contains($texto, 'Unknown database')) {
-        return 'La base de datos no existe. Revisa "base" en '
-             . 'config/credenciales.php; en cPanel lleva el prefijo de la '
-             . 'cuenta, por ejemplo enlixpe_cotizacion.';
+        return 'La base de datos no existe. Revisa DB_NAME en el .env; en '
+             . 'cPanel lleva el prefijo de la cuenta, por ejemplo '
+             . 'enlixpe_cotizacion.';
     }
 
     if ($codigo === 1044) {
@@ -51,9 +54,9 @@ function explicarErrorBd(Throwable $e): string
     }
 
     if ($codigo === 2002 || str_contains($texto, 'No such host') || str_contains($texto, 'Connection refused')) {
-        return 'No se pudo contactar al servidor MySQL. Revisa "host" y '
-             . '"puerto" en config/credenciales.php (en cPanel casi siempre '
-             . 'es localhost y 3306).';
+        return 'No se pudo contactar al servidor MySQL. Revisa DB_HOST y '
+             . 'DB_PORT en el .env (en cPanel casi siempre es localhost '
+             . 'y 3306).';
     }
 
     return esProduccion()
@@ -111,12 +114,12 @@ function verificarSistema(): array
         'titulo' => 'Archivos',
         'verificaciones' => [
             [
-                'ok'      => is_file($raiz . '/config/credenciales.php') || !esProduccion(),
-                'nombre'  => 'config/credenciales.php',
-                'detalle' => is_file($raiz . '/config/credenciales.php')
+                'ok'      => hayEnv() || !esProduccion(),
+                'nombre'  => 'Archivo .env',
+                'detalle' => hayEnv()
                     ? 'presente'
                     : (esProduccion()
-                        ? 'falta: copiar de config/credenciales.example.php'
+                        ? 'falta: cp .env.example .env y completarlo'
                         : 'no hace falta en desarrollo'),
             ],
             [

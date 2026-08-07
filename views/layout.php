@@ -45,7 +45,7 @@
             <span>
                 <strong>Modo prueba: acceso sin login.</strong>
                 Cualquiera con la URL ve costos, márgenes y clientes.
-                Para cerrarlo, poner <code>'acceso_libre' =&gt; false</code> en <code>config/app.php</code>.
+                Para cerrarlo, poner <code>APP_ACCESO_LIBRE=false</code> en el archivo <code>.env</code>.
             </span>
         </div>
     <?php endif; ?>

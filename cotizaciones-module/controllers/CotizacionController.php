@@ -73,6 +73,8 @@ class CotizacionController
             redirigir(url());
         }
 
+        validarCsrf();
+
         $id = (int) ($_POST['id'] ?? 0);
 
         if (Cotizacion::obtener($id) === null) {
@@ -105,6 +107,8 @@ class CotizacionController
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
             redirigir(url('crear'));
         }
+
+        validarCsrf();
 
         $items = $this->itemsDesdePost($_POST['items'] ?? []);
 
@@ -162,6 +166,7 @@ class CotizacionController
     public function eliminar(): void
     {
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            validarCsrf();
             Cotizacion::eliminar((int) ($_POST['id'] ?? 0));
         }
 

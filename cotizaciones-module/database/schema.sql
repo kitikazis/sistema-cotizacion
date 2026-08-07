@@ -21,6 +21,29 @@ USE enlix_cotizaciones;
 DROP TABLE IF EXISTS cotizacion_items;
 DROP TABLE IF EXISTS cotizaciones;
 DROP TABLE IF EXISTS clientes;
+DROP TABLE IF EXISTS usuarios;
+
+-- ---------------------------------------------------------------------
+-- Usuarios del panel
+--
+-- Sin registro publico: el primer usuario se crea por consola con
+-- tools/crear_usuario.php.
+-- ---------------------------------------------------------------------
+CREATE TABLE usuarios (
+    id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    nombre         VARCHAR(120) NOT NULL,
+    usuario        VARCHAR(60)  NOT NULL,
+    -- password_hash() con PASSWORD_DEFAULT: hoy bcrypt (60 chars), pero se
+    -- reserva 255 porque el algoritmo por defecto puede cambiar.
+    clave_hash     VARCHAR(255) NOT NULL,
+    activo         TINYINT(1) NOT NULL DEFAULT 1,
+    ultimo_acceso  DATETIME NULL,
+    creado_en      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_usuarios_usuario (usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
 -- Maestro de clientes

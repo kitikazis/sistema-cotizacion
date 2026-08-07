@@ -59,3 +59,51 @@ function redirigir(string $destino): void
     header('Location: ' . $destino);
     exit;
 }
+
+/**
+ * ¿Estamos en el servidor de produccion?
+ *
+ * Se decide por el host: en local se entra por 127.0.0.1 o localhost.
+ * Ante la duda devuelve true, que es el lado seguro (errores ocultos).
+ */
+function esProduccion(): bool
+{
+    $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+
+    if ($host === '') {
+        // CLI: los scripts de consola son de desarrollo.
+        return PHP_SAPI !== 'cli';
+    }
+
+    foreach (['127.0.0.1', 'localhost', '::1', '.local', '.test'] as $marca) {
+        if (str_contains($host, $marca)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Devuelve la firma escaneada como data URI para incrustarla en HTML.
+ *
+ * Se lee desde disco en vez de enlazarla por URL porque la carpeta pdf/
+ * esta bloqueada en .htaccess: una firma descargable permite falsificar
+ * documentos. Devuelve null si el archivo no existe.
+ */
+function firmaDataUri(?string $rutaRelativa): ?string
+{
+    if ($rutaRelativa === null || $rutaRelativa === '') {
+        return null;
+    }
+
+    $ruta = realpath(__DIR__ . '/../' . ltrim($rutaRelativa, '/'));
+
+    if ($ruta === false || !is_file($ruta)) {
+        return null;
+    }
+
+    $tipo = image_type_to_mime_type(exif_imagetype($ruta) ?: IMAGETYPE_PNG);
+
+    return 'data:' . $tipo . ';base64,' . base64_encode((string) file_get_contents($ruta));
+}

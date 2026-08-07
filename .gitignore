@@ -5,6 +5,10 @@
 # Usar config/empresa.example.php como plantilla.
 /cotizaciones-module/config/empresa.php
 
+# Credenciales de la base de datos de produccion.
+# Usar config/credenciales.example.php como plantilla.
+/cotizaciones-module/config/credenciales.php
+
 # Firma escaneada del gerente. Fuera del repo a proposito: con ella se puede
 # falsificar un documento firmado. Se copia a mano en cada instalacion; si
 # falta, el PDF se genera igual pero sin firma.

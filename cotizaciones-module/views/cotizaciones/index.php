@@ -170,6 +170,7 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                                 <a class="btn-ico" title="Descargar PDF" href="<?= e(url('pdf', ['id' => $c['id'], 'descargar' => 1])) ?>"><?= icono('descargar') ?></a>
                                 <form method="post" action="<?= e(url('eliminar')) ?>"
                                       onsubmit="return confirm('¿Eliminar la cotización N° <?= e($c['numero']) ?>?')">
+                                    <?= campoCsrf() ?>
                                     <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
                                     <button type="submit" class="btn-ico btn-ico-peligro" title="Eliminar"><?= icono('basura') ?></button>
                                 </form>

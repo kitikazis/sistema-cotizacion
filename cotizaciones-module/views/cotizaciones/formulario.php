@@ -63,6 +63,8 @@ $configAlpine = [
 <form method="post" action="<?= e(url($editando ? 'actualizar' : 'guardar')) ?>"
       x-data="cotizacionForm(<?= e(json_encode($configAlpine)) ?>)">
 
+    <?= campoCsrf() ?>
+
     <?php if ($editando): ?>
         <input type="hidden" name="id" value="<?= (int) $cotizacion['id'] ?>">
     <?php endif; ?>
@@ -284,8 +286,9 @@ $configAlpine = [
 
     <!-- ============ Datos del emisor ============ -->
     <?php
-        $rutaFirmaWeb = $empresaConfig['firma']['imagen'] ?? null;
-        $hayFirma = $rutaFirmaWeb && is_file(__DIR__ . '/../../' . ltrim($rutaFirmaWeb, '/'));
+        // Incrustada como data URI: pdf/ esta bloqueada por .htaccess para que
+        // la firma no se pueda descargar desde internet.
+        $firmaImagen = firmaDataUri($empresaConfig['firma']['imagen'] ?? null);
     ?>
     <div class="tarjeta">
         <h2>
@@ -317,8 +320,8 @@ $configAlpine = [
             <div>
                 <label>Firma</label>
                 <div class="fijo fijo-firma">
-                    <?php if ($hayFirma): ?>
-                        <img src="<?= e($rutaFirmaWeb) ?>" alt="Firma" class="firma-preview">
+                    <?php if ($firmaImagen !== null): ?>
+                        <img src="<?= e($firmaImagen) ?>" alt="Firma" class="firma-preview">
                     <?php else: ?>
                         <span class="pista">Sin imagen de firma</span>
                     <?php endif; ?>

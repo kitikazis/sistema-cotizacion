@@ -81,7 +81,10 @@ body {
 
 label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; color: var(--tenue); }
 
-input[type="text"], input[type="number"], input[type="date"], input[type="search"], select, textarea {
+/* Enumerar cada type es fragil: uno nuevo se queda sin estilo y sale
+   angosto. Se excluyen solo los que no son campos de texto. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+select, textarea {
     width: 100%;
     padding: 7px 9px;
     border: 1px solid var(--borde);
@@ -317,6 +320,50 @@ h2 .ico { margin-right: 6px; color: var(--azul); vertical-align: -0.15em; }
 
 .tabla-listado td { padding: 9px 8px; }
 .mono { font-variant-numeric: tabular-nums; }
+
+/* =====================================================================
+   Pantalla de acceso
+   ===================================================================== */
+.pantalla-login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+.caja-login {
+    width: 100%;
+    max-width: 370px;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    padding: 30px 28px;
+}
+.login-marca {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--azul);
+    margin-bottom: 24px;
+}
+.pantalla-login .aviso { font-size: 12.5px; }
+.pantalla-login .pie { margin-top: 18px; padding: 0; }
+
+/* Usuario y salida en la barra superior */
+.sesion {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+    color: var(--tenue);
+    padding-left: 14px;
+    border-left: 1px solid var(--borde);
+}
+.form-salir { display: inline-flex; margin: 0; }
 
 /* Estados */
 .etiqueta-borrador  { background: #f1f5f9; color: #475569; }

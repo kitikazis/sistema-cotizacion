@@ -21,6 +21,16 @@
         <nav>
             <a href="<?= e(url()) ?>"><?= icono('documento', 14) ?> Listado</a>
             <a class="btn btn-primario" href="<?= e(url('crear')) ?>"><?= icono('mas') ?> Nueva cotización</a>
+
+            <?php if ($u = usuarioActual()): ?>
+                <span class="sesion">
+                    <?= icono('usuario', 14, 'ico-tenue') ?> <?= e($u['nombre']) ?>
+                </span>
+                <form method="post" action="<?= e(url('salir')) ?>" class="form-salir">
+                    <?= campoCsrf() ?>
+                    <button type="submit" class="btn-ico" title="Cerrar sesión"><?= icono('volver') ?></button>
+                </form>
+            <?php endif; ?>
         </nav>
     </header>
 

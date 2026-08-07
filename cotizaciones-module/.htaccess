@@ -1,0 +1,59 @@
+# =====================================================================
+# Configuracion para hosting compartido (cPanel).
+#
+# El document root del subdominio apunta a esta carpeta, asi que TODO lo
+# que este aqui es alcanzable desde internet salvo que se bloquee. Estas
+# reglas dejan accesibles solo index.php y public/.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Carpetas que nunca deben servirse.
+#   pdf/      contiene la firma escaneada
+#   config/   credenciales de base de datos
+#   database/ el esquema completo
+# Se responde 404 y no 403 para no confirmar que existen.
+# ---------------------------------------------------------------------
+RedirectMatch 404 ^/(config|database|models|controllers|helpers|tests|vendor|storage|pdf)(/|$)
+
+# Archivos sueltos que tampoco deben salir
+RedirectMatch 404 ^/(composer\.(json|lock)|README\.md|\.git)
+
+<FilesMatch "\.(sql|md|lock|ini|log|bak|example\.php)$">
+    Require all denied
+</FilesMatch>
+
+# ---------------------------------------------------------------------
+# Forzar HTTPS. Requiere tener el certificado activo en cPanel
+# (AutoSSL / Let's Encrypt); si todavia no lo esta, comentar este bloque
+# o el sitio quedara en un bucle de redirecciones.
+# ---------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+</IfModule>
+
+# ---------------------------------------------------------------------
+# Sin listados de directorio
+# ---------------------------------------------------------------------
+Options -Indexes
+
+# ---------------------------------------------------------------------
+# Errores a log, nunca a pantalla. Duplica lo que ya hace index.php,
+# por si algo revienta antes de que PHP llegue a ejecutarlo.
+# ---------------------------------------------------------------------
+<IfModule mod_php.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+</IfModule>
+
+# ---------------------------------------------------------------------
+# Cabeceras de seguridad basicas
+# ---------------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "same-origin"
+</IfModule>
+
+DirectoryIndex index.php

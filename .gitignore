@@ -1,21 +1,25 @@
+# Rutas relativas a la raiz del repo. El modulo se movio de
+# cotizaciones-module/ a la raiz para que index.php quede en el document
+# root del subdominio en cPanel.
+
 # Dependencias de Composer (se reinstalan con `composer install`)
-/cotizaciones-module/vendor/
+/vendor/
 
 # Datos reales del emisor: cuentas bancarias, RUC y contacto.
 # Usar config/empresa.example.php como plantilla.
-/cotizaciones-module/config/empresa.php
+/config/empresa.php
 
 # Credenciales de la base de datos de produccion.
 # Usar config/credenciales.example.php como plantilla.
-/cotizaciones-module/config/credenciales.php
+/config/credenciales.php
 
 # Firma escaneada del gerente. Fuera del repo a proposito: con ella se puede
 # falsificar un documento firmado. Se copia a mano en cada instalacion; si
 # falta, el PDF se genera igual pero sin firma.
-/cotizaciones-module/pdf/firma*.png
+/pdf/firma*.png
 
 # PDFs generados en tiempo de ejecucion
-/cotizaciones-module/storage/*.pdf
+/storage/*.pdf
 
 # Sistema operativo
 Thumbs.db

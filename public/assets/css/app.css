@@ -647,19 +647,61 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
 
 .det-cargando { color: var(--tenue); text-align: center; padding: 32px 0; }
 
-.det-cabecera {
+/* Franja superior: el total y los cuatro datos que se miran primero. */
+.det-hero {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding-bottom: 14px;
-    margin-bottom: 16px;
-    border-bottom: 1px solid var(--borde);
+    gap: 24px;
+    flex-wrap: wrap;
+    background: var(--fondo);
+    border: 1px solid var(--borde);
+    border-radius: 9px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
 }
-.det-cabecera .etiqueta { margin-left: 8px; }
-.det-total { text-align: right; }
-.det-total span { display: block; font-size: 11px; color: var(--tenue); text-transform: uppercase; letter-spacing: .04em; }
-.det-total strong { font-size: 21px; font-variant-numeric: tabular-nums; }
+.det-hero-total { min-width: 150px; }
+.det-hero-total > span {
+    display: block;
+    font-size: 10.5px;
+    color: var(--tenue);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+.det-hero-total > strong {
+    font-size: 26px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+.det-hero-datos {
+    display: flex;
+    gap: 26px;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+.det-hero-datos > div { min-width: 0; }
+/* Solo la etiqueta directa. Sin el ">" tambien alcanzaba al span de la
+   insignia de estado y le quitaba la pastilla. */
+.det-hero-datos > div > span {
+    display: block;
+    font-size: 10.5px;
+    color: var(--tenue);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 3px;
+}
+.det-hero-datos strong { display: block; font-size: 13.5px; font-weight: 600; }
+.det-hero-datos strong .etiqueta { font-size: 11px; }
+.det-hero-datos em {
+    display: block;
+    font-style: normal;
+    font-size: 11px;
+    margin-top: 2px;
+}
+.det-vencida { color: var(--rojo); font-weight: 700; }
+.det-porvencer { color: var(--ambar); font-weight: 700; }
 
 .det-columnas {
     display: grid;
@@ -679,16 +721,19 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
 .det-destacado { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
 .det-texto { margin: 0; font-size: 13px; line-height: 1.55; }
 
-/* Pares etiqueta-valor sin tabla: se alinean solos y respiran mejor. */
+/* Pares etiqueta-valor.
+   La etiqueta lleva ancho fijo y el valor se alinea a la izquierda pegado
+   a ella: justificarlos a los extremos abria huecos enormes y obligaba a
+   recorrer la linea con la vista para emparejarlos. */
 .det-bloque dl {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 4px 12px;
+    grid-template-columns: 108px 1fr;
+    gap: 6px 10px;
     margin: 0;
     font-size: 13px;
 }
 .det-bloque dt { color: var(--tenue); }
-.det-bloque dd { margin: 0; text-align: right; }
+.det-bloque dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
 
 .det-tabla { font-size: 12.5px; }
 .det-tabla th {

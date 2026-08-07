@@ -26,17 +26,49 @@ $vence = date(
 );
 ?>
 
-<!-- Cabecera -->
-<div class="det-cabecera">
-    <div>
-        <span class="folio"><?= e($cotizacion['numero']) ?></span>
-        <span class="etiqueta etiqueta-<?= e($cotizacion['estado']) ?>">
-            <?= e($estados[$cotizacion['estado']] ?? $cotizacion['estado']) ?>
-        </span>
-    </div>
-    <div class="det-total">
+<?php
+    // Dias que le quedan de vigencia. Es lo primero que se quiere saber al
+    // abrir una cotizacion vieja.
+    $hoy       = new DateTimeImmutable('today');
+    $caduca    = new DateTimeImmutable($vence === '' ? 'today' : implode('-', array_reverse(explode('/', $vence))));
+    $diasResto = (int) $hoy->diff($caduca)->format('%r%a');
+?>
+
+<!-- Franja con lo que se mira primero -->
+<div class="det-hero">
+    <div class="det-hero-total">
         <span>Total</span>
         <strong><?= e($simbolo) ?> <?= money($cotizacion['cliente_total']) ?></strong>
+    </div>
+
+    <div class="det-hero-datos">
+        <div>
+            <span>Estado</span>
+            <strong>
+                <span class="etiqueta etiqueta-<?= e($cotizacion['estado']) ?>">
+                    <?= e($estados[$cotizacion['estado']] ?? $cotizacion['estado']) ?>
+                </span>
+            </strong>
+        </div>
+        <div>
+            <span>Emisión</span>
+            <strong><?= e(date('d/m/Y', strtotime((string) $cotizacion['fecha_emision']))) ?></strong>
+        </div>
+        <div>
+            <span>Válida hasta</span>
+            <strong><?= e($vence) ?></strong>
+            <?php if ($diasResto < 0): ?>
+                <em class="det-vencida">Vencida</em>
+            <?php elseif ($diasResto === 0): ?>
+                <em class="det-porvencer">Vence hoy</em>
+            <?php elseif ($diasResto <= 3): ?>
+                <em class="det-porvencer">Quedan <?= $diasResto ?> días</em>
+            <?php endif; ?>
+        </div>
+        <div>
+            <span>Ítems</span>
+            <strong><?= count($cotizacion['items']) ?></strong>
+        </div>
     </div>
 </div>
 
@@ -52,16 +84,13 @@ $vence = date(
     </div>
 
     <div class="det-bloque">
-        <h4><?= icono('calendario', 13) ?> Condiciones</h4>
+        <h4><?= icono('calendario', 13) ?> Condiciones comerciales</h4>
         <dl>
-            <dt>Emisión</dt>
-            <dd><?= e(date('d/m/Y', strtotime((string) $cotizacion['fecha_emision']))) ?></dd>
-
-            <dt>Válida hasta</dt>
-            <dd><?= e($vence) ?> <span class="pista">(<?= (int) $cotizacion['validez_dias'] ?> días)</span></dd>
-
             <dt>Forma de pago</dt>
             <dd><?= e($formaPago) ?></dd>
+
+            <dt>Validez</dt>
+            <dd><?= (int) $cotizacion['validez_dias'] ?> días</dd>
 
             <dt>Entrega</dt>
             <dd><?= $cotizacion['tiempo_entrega_dias'] ? (int) $cotizacion['tiempo_entrega_dias'] . ' días' : '—' ?></dd>

@@ -11,15 +11,7 @@ class CotizacionController
     /** Listado con buscador y filtros. */
     public function index(): void
     {
-        $filtros = [
-            'q'           => trim((string) ($_GET['q'] ?? '')),
-            'fecha_desde' => (string) ($_GET['fecha_desde'] ?? ''),
-            'fecha_hasta' => (string) ($_GET['fecha_hasta'] ?? ''),
-            'estado'      => (string) ($_GET['estado'] ?? ''),
-            'moneda'      => (string) ($_GET['moneda'] ?? ''),
-            'orden'       => (string) ($_GET['orden'] ?? ''),
-            'dir'         => (string) ($_GET['dir'] ?? 'desc'),
-        ];
+        $filtros = $this->filtrosDesdeGet();
 
         $this->render('cotizaciones/index', [
             'titulo'       => 'Cotizaciones',
@@ -64,6 +56,22 @@ class CotizacionController
             'ganancias'     => PricingCalculator::GANANCIAS_PERMITIDAS,
             'error'         => $_GET['error'] ?? null,
         ]);
+    }
+
+    /** Formulario de alta suelto, sin layout, para el modal del listado. */
+    public function crearFragmento(): void
+    {
+        header('Content-Type: text/html; charset=UTF-8');
+
+        $titulo        = '';
+        $cotizacion    = null;
+        $numero        = Cotizacion::siguienteNumero();
+        $empresaConfig = configEmpresa();
+        $ganancias     = PricingCalculator::GANANCIAS_PERMITIDAS;
+        $error         = null;
+        $enModal       = true;
+
+        require __DIR__ . '/../views/cotizaciones/formulario.php';
     }
 
     /**
@@ -155,6 +163,107 @@ class CotizacionController
         }
 
         redirigir(url('ver', ['id' => $id, 'ok' => 1]));
+    }
+
+    /**
+     * Filtros de busqueda tal como llegan por la url.
+     * Compartido por el listado y la exportacion, para que el CSV
+     * contenga exactamente lo que se esta viendo en pantalla.
+     */
+    private function filtrosDesdeGet(): array
+    {
+        return [
+            'q'           => trim((string) ($_GET['q'] ?? '')),
+            'fecha_desde' => (string) ($_GET['fecha_desde'] ?? ''),
+            'fecha_hasta' => (string) ($_GET['fecha_hasta'] ?? ''),
+            'estado'      => (string) ($_GET['estado'] ?? ''),
+            'moneda'      => (string) ($_GET['moneda'] ?? ''),
+            'orden'       => (string) ($_GET['orden'] ?? ''),
+            'dir'         => (string) ($_GET['dir'] ?? 'desc'),
+        ];
+    }
+
+    /**
+     * Descarga el listado en un CSV que Excel abre directamente.
+     *
+     * Respeta los filtros activos: lo que se ve en pantalla es lo que se
+     * exporta. Se genera CSV y no xlsx a proposito: un xlsx real exige una
+     * libreria pesada, y este archivo Excel lo abre igual.
+     */
+    public function exportar(): void
+    {
+        $filtros = $this->filtrosDesdeGet();
+        $filas   = Cotizacion::listar($filtros);
+
+        $nombre = 'cotizaciones-' . date('Y-m-d') . '.csv';
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $nombre . '"');
+        header('Cache-Control: no-store');
+
+        $salida = fopen('php://output', 'w');
+
+        // BOM: sin esto Excel abre el archivo como ANSI y rompe las tildes.
+        fwrite($salida, "\xEF\xBB\xBF");
+
+        // Punto y coma: es el separador que espera Excel en configuracion
+        // regional espanola. Con coma, todo cae en una sola columna.
+        $sep = ';';
+
+        fputcsv($salida, [
+            'N°', 'Empresa', 'RUC', 'Dirección', 'Emisión', 'Válida hasta',
+            'Forma de pago', 'Días crédito', 'Entrega (días)', 'Moneda', 'Ítems',
+            'Subtotal', 'IGV', 'Total', 'Estado', 'Emisor', 'RUC emisor',
+        ], $sep);
+
+        $empresa = configEmpresa();
+
+        foreach ($filas as $f) {
+            $vence = date(
+                'd/m/Y',
+                strtotime((string) $f['fecha_emision'] . ' +' . (int) $f['validez_dias'] . ' days')
+            );
+
+            $formaPago = ucfirst((string) $f['forma_pago']);
+
+            fputcsv($salida, [
+                $f['numero'],
+                $f['razon_social'],
+                $f['ruc'] ?? '',
+                $f['direccion'] ?? '',
+                date('d/m/Y', strtotime((string) $f['fecha_emision'])),
+                $vence,
+                $formaPago,
+                $f['forma_pago'] === 'credito' ? (int) $f['credito_dias'] : '',
+                $f['tiempo_entrega_dias'] ? (int) $f['tiempo_entrega_dias'] : '',
+                $f['moneda'],
+                (int) $f['items'],
+                $this->decimalExcel($f['cliente_subtotal']),
+                $this->decimalExcel($f['cliente_igv']),
+                $this->decimalExcel($f['cliente_total']),
+                ucfirst((string) $f['estado']),
+                $f['emisor_razon_social'] ?: $empresa['razon_social'],
+                $f['emisor_ruc'] ?: $empresa['ruc'],
+            ], $sep);
+        }
+
+        fclose($salida);
+        exit;
+    }
+
+    /**
+     * Numero con coma decimal y sin separador de miles.
+     *
+     * Excel en espanol espera la coma: con punto interpreta 9610.00 como
+     * nueve millones y pico, o lo deja como texto.
+     */
+    private function decimalExcel($valor): string
+    {
+        return number_format((float) $valor, 2, ',', '');
     }
 
     /**

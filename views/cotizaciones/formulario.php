@@ -57,7 +57,8 @@ $configAlpine = [
     <div class="aviso aviso-error"><?= e($error) ?></div>
 <?php endif; ?>
 
-<?php if ($editando): ?>
+<?php // En el modal la cabecera ya dice que cotizacion se esta editando. ?>
+<?php if ($editando && empty($enModal)): ?>
     <div class="aviso aviso-info">
         Estás editando la cotización N° <?= e($cotizacion['numero']) ?>.
         Al guardar se recalculan todos los montos y se reemplazan sus ítems.
@@ -75,7 +76,11 @@ $configAlpine = [
 
     <!-- ============ Datos del cliente y condiciones ============ -->
     <div class="tarjeta">
-        <h2><?= icono('documento', 15) ?>Cotización N° <?= e($numero) ?></h2>
+        <?php // Dentro del modal el numero ya sale en la cabecera. ?>
+        <h2>
+            <?= icono(!empty($enModal) ? 'empresa' : 'documento', 15) ?>
+            <?= !empty($enModal) ? 'Cliente y condiciones' : 'Cotización N° ' . e($numero) ?>
+        </h2>
         <input type="hidden" name="numero" value="<?= e($numero) ?>">
 
         <div class="grid grid-3">

@@ -80,6 +80,24 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
             <?php if ($hayFiltros): ?>
                 <a class="btn btn-sm" href="<?= e(url()) ?>"><?= icono('equis') ?> Limpiar</a>
             <?php endif; ?>
+
+            <?php
+                // Exporta lo que se esta viendo: se arrastran los filtros
+                // activos a la url de descarga.
+                $paramsExport = array_filter([
+                    'q'           => $filtros['q'],
+                    'fecha_desde' => $filtros['fecha_desde'],
+                    'fecha_hasta' => $filtros['fecha_hasta'],
+                    'estado'      => $filtros['estado'],
+                    'moneda'      => $filtros['moneda'],
+                    'orden'       => $filtros['orden'],
+                    'dir'         => $filtros['dir'],
+                ], static fn($v) => $v !== '' && $v !== null);
+            ?>
+            <a class="btn" href="<?= e(url('exportar', $paramsExport)) ?>"
+               title="<?= $hayFiltros ? 'Descarga solo lo filtrado' : 'Descarga todo el listado' ?>">
+                <?= icono('descargar') ?> Excel
+            </a>
         </div>
 
         <div class="panel-filtros" x-show="abierto" x-cloak x-transition>
@@ -120,7 +138,10 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
 </div>
 
 <!-- ============ Tabla ============ -->
-<div class="tarjeta" x-data="{
+<?php // x-effect: congela el scroll del fondo mientras haya un modal abierto. ?>
+<div class="tarjeta"
+     x-effect="document.body.classList.toggle('sin-scroll', !!(detalle || editando || porEliminar))"
+     x-data="{
         porEliminar: null,
         detalle: null,
         html: '',
@@ -145,18 +166,41 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
             this.cargando = false;
         },
 
-        // ---- Edicion en modal ----
+        // ---- Alta y edicion en modal ----
+        // Un solo modal para las dos: el formulario es el mismo, solo
+        // cambian el titulo y de donde se carga.
         editando: null,
         htmlEdicion: '',
         guardando: false,
 
-        async abrirEdicion(c) {
-            this.editando = c;
+        init() {
+            // Lo usa el boton de alta de la cabecera, que vive fuera de
+            // este componente. Ojo: nada de comillas dobles aqui dentro,
+            // cierran el atributo x-data y el resto se imprime como texto.
+            window.abrirNuevaCotizacion = () => this.abrirNueva();
+        },
+
+        abrirNueva() {
+            this.cargarFormulario(
+                { titulo: 'Nueva cotización', subtitulo: 'Se asigna el siguiente correlativo' },
+                'index.php?accion=crearfrag'
+            );
+        },
+
+        abrirEdicion(c) {
+            this.cargarFormulario(
+                { titulo: 'Editar cotización N° ' + c.numero, subtitulo: c.empresa },
+                'index.php?accion=editarfrag&id=' + c.id
+            );
+        },
+
+        async cargarFormulario(cabecera, url) {
+            this.editando = cabecera;
             this.htmlEdicion = '';
             this.cargando = true;
 
             try {
-                const r = await fetch('index.php?accion=editarfrag&id=' + c.id);
+                const r = await fetch(url);
                 this.htmlEdicion = r.ok
                     ? await r.text()
                     : '<p class=&quot;aviso aviso-error&quot;>No se pudo cargar el formulario.</p>';
@@ -305,10 +349,12 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
 
             <div class="modal-pie">
                 <button type="button" class="btn" @click="detalle = null">Cerrar</button>
-                <a class="btn" :href="'index.php?accion=editar&id=' + detalle?.id">
-                    <?= icono('lapiz') ?> Editar
-                </a>
-                <?php // Sin descargar=1 el PDF se sirve inline y el navegador lo abre. ?>
+                <?php
+                    // Sin boton Editar: sacaba del listado hacia la pantalla
+                    // completa, ahora que la edicion tiene su propio modal.
+                    // Para editar se usa el lapiz de la fila.
+                    // Sin descargar=1 el PDF se sirve inline y el navegador lo abre.
+                ?>
                 <a class="btn" target="_blank" rel="noopener"
                    :href="'index.php?accion=pdf&id=' + detalle?.id">
                     <?= icono('ojo') ?> Ver PDF
@@ -329,8 +375,8 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
             <div class="modal-cabecera modal-cabecera-neutra">
                 <span class="modal-ico modal-ico-azul"><?= icono('lapiz', 20) ?></span>
                 <div>
-                    <strong>Editar cotización N° <span x-text="editando?.numero"></span></strong>
-                    <span x-text="editando?.empresa"></span>
+                    <strong x-text="editando?.titulo"></strong>
+                    <span x-text="editando?.subtitulo"></span>
                 </div>
                 <button type="button" class="modal-cerrar" @click="editando = null" title="Cerrar">
                     <?= icono('equis', 18) ?>

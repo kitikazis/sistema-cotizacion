@@ -631,12 +631,24 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
 .modal-cuerpo-form {
     flex: 1;
     overflow-y: auto;
-    padding: 18px 20px 0;
+    padding: 16px 18px 0;
     background: var(--fondo);
 }
 /* Dentro del modal las tarjetas del formulario no necesitan sombra: ya
-   estan sobre una superficie elevada. */
-.modal-cuerpo-form .tarjeta { box-shadow: none; }
+   estan sobre una superficie elevada. Y van mas compactas: el alto util
+   es el del modal, no el de la pagina. */
+.modal-cuerpo-form .tarjeta {
+    box-shadow: none;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+}
+.modal-cuerpo-form .tarjeta h2 { margin-bottom: 14px; }
+.modal-cuerpo-form .grid { gap: 12px; }
+
+/* Con un modal abierto el fondo no debe desplazarse: al hacer scroll
+   dentro del formulario, si se llega al final el gesto arrastraba la
+   pagina de atras. */
+body.sin-scroll { overflow: hidden; }
 /* La barra de guardar se pega al fondo del area scrolleable del modal. */
 .modal-cuerpo-form .barra-guardar {
     margin: 18px -20px 0;

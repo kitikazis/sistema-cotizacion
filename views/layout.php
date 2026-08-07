@@ -20,7 +20,16 @@
         <a class="marca" href="<?= e(url()) ?>"><?= icono('calculadora', 18) ?> Enlix · Cotizaciones</a>
         <nav>
             <a href="<?= e(url()) ?>"><?= icono('documento', 14) ?> Listado</a>
-            <a class="btn btn-primario" href="<?= e(url('crear')) ?>"><?= icono('mas') ?> Nueva cotización</a>
+            <?php
+                // Si el listado registro su modal, se abre ahi mismo; en el
+                // resto de pantallas el enlace navega como siempre. Se hace
+                // con JS plano porque esta cabecera queda fuera del x-data
+                // del listado.
+            ?>
+            <a class="btn btn-primario" href="<?= e(url('crear')) ?>"
+               onclick="if (window.abrirNuevaCotizacion) { window.abrirNuevaCotizacion(); return false; }">
+                <?= icono('mas') ?> Nueva cotización
+            </a>
 
             <?php if ($u = usuarioActual()): ?>
                 <span class="sesion">

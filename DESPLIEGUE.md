@@ -87,22 +87,34 @@ En cPanel → **Bases de datos MySQL**:
 2. Crear un usuario y **generar la contraseña** con el botón de cPanel.
 3. Asignar el usuario a la base con **todos los privilegios**.
 
-Importar el esquema desde la Terminal (más simple que phpMyAdmin, porque
-evita el problema del `CREATE DATABASE`):
+Las tablas **no** se crean a mano: hay un migrador que las arma leyendo la
+configuración del `.env`.
 
 ```bash
 cd ~/cotizacion.enlix.pe
-mysql -u CUENTA_cotizador -p CUENTA_cotizador < database/schema.sql
+php tools/migrar.php
 ```
 
-Pedirá la contraseña. `schema.sql` empieza con `CREATE DATABASE` y `USE`
-`enlix_cotizaciones`; en cPanel esas dos líneas fallan por permisos. Si el
-comando se queja, editar el archivo y borrarlas:
+Ventajas sobre importar el `.sql` con el cliente de MySQL:
+
+- No pide contraseña: la toma del `.env`.
+- No hay que quitarle el `CREATE DATABASE` a nada.
+- Es **idempotente**: se puede volver a correr sin miedo. Cada archivo usa
+  `CREATE TABLE IF NOT EXISTS` y queda anotado en la tabla `migraciones`,
+  así que lo ya aplicado no se repite y **los datos existentes no se tocan**.
+- Si algo falla, se detiene ahí y dice en qué archivo.
+
+Para ver qué falta sin aplicar nada:
 
 ```bash
-sed -i '/^CREATE DATABASE/d; /^USE /d' database/schema.sql
-mysql -u CUENTA_cotizador -p CUENTA_cotizador < database/schema.sql
+php tools/migrar.php --estado
 ```
+
+Las migraciones viven en `database/migraciones/`, numeradas: el orden importa
+porque las claves foráneas dependen de las tablas anteriores.
+
+> `database/schema.sql` sigue existiendo para levantar una base desde cero en
+> desarrollo, pero en el servidor se usa el migrador.
 
 ---
 

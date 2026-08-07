@@ -8,12 +8,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($titulo ?? 'Cotizaciones') ?> · Enlix</title>
-    <link rel="stylesheet" href="public/assets/css/app.css">
+    <link rel="stylesheet" href="<?= e(asset('public/assets/css/app.css')) ?>">
     <!-- El orden importa: los scripts con defer corren en orden de aparicion y
          cotizacion-form.js debe registrar el listener alpine:init ANTES de que
          Alpine arranque. -->
-    <script defer src="public/assets/js/cotizacion-form.js"></script>
-    <script defer src="public/assets/js/alpine.min.js"></script>
+    <script defer src="<?= e(asset('public/assets/js/cotizacion-form.js')) ?>"></script>
+    <script defer src="<?= e(asset('public/assets/js/alpine.min.js')) ?>"></script>
 </head>
 <body>
     <header class="barra">

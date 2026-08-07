@@ -14,7 +14,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($titulo) ?> · Enlix Cotizaciones</title>
-    <link rel="stylesheet" href="public/assets/css/app.css">
+    <link rel="stylesheet" href="<?= e(asset('public/assets/css/app.css')) ?>">
 </head>
 <body class="pantalla-login">
 

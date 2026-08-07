@@ -53,6 +53,22 @@ function configEmpresa(): array
     return require $real;
 }
 
+/**
+ * Url de un archivo estatico con marca de version.
+ *
+ * Le pega ?v=<fecha de modificacion> para que el navegador descargue la
+ * version nueva en cuanto se despliega. Sin esto, tras un git pull el
+ * navegador sigue usando el CSS cacheado y la pantalla se ve rota: los
+ * estilos nuevos no existen para el, aunque el servidor ya los tenga.
+ */
+function asset(string $ruta): string
+{
+    $absoluta = dirname(__DIR__) . '/' . ltrim($ruta, '/');
+    $version  = is_file($absoluta) ? filemtime($absoluta) : time();
+
+    return $ruta . '?v=' . $version;
+}
+
 /** Redirige y corta la ejecucion. */
 function redirigir(string $destino): void
 {

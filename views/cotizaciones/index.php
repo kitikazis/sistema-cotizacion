@@ -196,7 +196,10 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
     <?php endif; ?>
 
     <!-- ============ Confirmación de borrado ============ -->
-    <div class="modal-fondo" x-show="porEliminar" x-cloak x-transition.opacity
+    <!-- El display:none va en linea a proposito: si el navegador sirviera un
+         CSS cacheado sin la regla de x-cloak, el modal apareceria desplegado
+         dentro de la pagina. Alpine lo sobreescribe al abrirlo. -->
+    <div class="modal-fondo" style="display:none" x-show="porEliminar" x-cloak x-transition.opacity
          @click.self="porEliminar = null"
          @keydown.escape.window="porEliminar = null"
          role="dialog" aria-modal="true" aria-labelledby="titulo-eliminar">

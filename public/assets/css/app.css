@@ -491,8 +491,9 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
     width: 3px;
     background: var(--azul-vivo);
 }
-.resumen:nth-child(2)::before { background: var(--verde); }
-.resumen:nth-child(3)::before { background: #7c3aed; }
+.resumen:nth-child(2)::before { background: var(--azul-vivo); }
+.resumen:nth-child(3)::before { background: var(--verde); }
+.resumen:nth-child(4)::before { background: #7c3aed; }
 
 .resumen-ico {
     display: inline-flex;
@@ -505,16 +506,19 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
     color: var(--azul);
     flex-shrink: 0;
 }
-.resumen:nth-child(2) .resumen-ico { background: #ecfdf5; color: var(--verde); }
-.resumen:nth-child(3) .resumen-ico { background: #f5f3ff; color: #7c3aed; }
+.resumen:nth-child(3) .resumen-ico { background: #ecfdf5; color: var(--verde); }
+.resumen:nth-child(4) .resumen-ico { background: #f5f3ff; color: #7c3aed; }
 
 .resumen-valor {
     display: block;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     letter-spacing: -.01em;
-    line-height: 1.2;
+    line-height: 1.25;
+    /* Los importes con dos monedas se parten en dos lineas antes que
+       desbordar la tarjeta. */
+    overflow-wrap: anywhere;
 }
 .resumen-etq { display: block; font-size: 11px; color: var(--tenue); margin-top: 2px; }
 

@@ -65,9 +65,22 @@ class Cotizacion
     {
         [$where, $params] = self::construirFiltros($filtros);
 
-        $sql = "SELECT COUNT(*) AS cantidad,
-                       COALESCE(SUM(CASE WHEN c.moneda = 'PEN' THEN c.cliente_total END), 0) AS total_pen,
-                       COALESCE(SUM(CASE WHEN c.moneda = 'USD' THEN c.cliente_total END), 0) AS total_usd
+        // Se separa por estado para poder distinguir lo que sigue en juego
+        // de lo que ya cerro: sumarlo todo junto no dice nada util.
+        $sql = "SELECT
+                    COUNT(*) AS cantidad,
+                    COALESCE(SUM(CASE WHEN c.moneda = 'PEN' THEN c.cliente_total END), 0) AS total_pen,
+                    COALESCE(SUM(CASE WHEN c.moneda = 'USD' THEN c.cliente_total END), 0) AS total_usd,
+
+                    SUM(c.estado = 'borrador')  AS n_borrador,
+                    SUM(c.estado = 'emitida')   AS n_emitida,
+                    SUM(c.estado = 'aceptada')  AS n_aceptada,
+                    SUM(c.estado = 'rechazada') AS n_rechazada,
+
+                    COALESCE(SUM(CASE WHEN c.estado = 'emitida'  AND c.moneda = 'PEN' THEN c.cliente_total END), 0) AS oferta_pen,
+                    COALESCE(SUM(CASE WHEN c.estado = 'emitida'  AND c.moneda = 'USD' THEN c.cliente_total END), 0) AS oferta_usd,
+                    COALESCE(SUM(CASE WHEN c.estado = 'aceptada' AND c.moneda = 'PEN' THEN c.cliente_total END), 0) AS ganado_pen,
+                    COALESCE(SUM(CASE WHEN c.estado = 'aceptada' AND c.moneda = 'USD' THEN c.cliente_total END), 0) AS ganado_usd
                 FROM cotizaciones c
                 JOIN clientes cl ON cl.id = c.cliente_id
                 {$where}";
@@ -75,7 +88,17 @@ class Cotizacion
         $stmt = db()->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->fetch() ?: ['cantidad' => 0, 'total_pen' => 0, 'total_usd' => 0];
+        $r = $stmt->fetch() ?: [];
+
+        // Tasa de cierre sobre lo que ya tuvo respuesta: incluir las que
+        // siguen esperando la hundiria sin que signifique nada.
+        $resueltas = (int) ($r['n_aceptada'] ?? 0) + (int) ($r['n_rechazada'] ?? 0);
+        $r['tasa_cierre'] = $resueltas > 0
+            ? round((int) $r['n_aceptada'] * 100 / $resueltas)
+            : null;
+        $r['resueltas'] = $resueltas;
+
+        return $r;
     }
 
     /**
@@ -157,11 +180,16 @@ class Cotizacion
      * Siguiente correlativo, con relleno a 4 digitos.
      * El Excel arranca en 0145, asi que esa es la base.
      */
-    public static function siguienteNumero(): string
+    public static function siguienteNumero(bool $bloqueando = false): string
     {
-        $max = db()->query(
-            'SELECT MAX(CAST(numero AS UNSIGNED)) FROM cotizaciones'
-        )->fetchColumn();
+        // FOR UPDATE dentro de una transaccion serializa a quienes esten
+        // creando a la vez: el segundo espera y toma el numero siguiente.
+        // Sin esto, dos personas con el formulario abierto obtenian el mismo
+        // correlativo y la segunda chocaba contra la clave unica.
+        $sql = 'SELECT MAX(CAST(numero AS UNSIGNED)) FROM cotizaciones'
+             . ($bloqueando ? ' FOR UPDATE' : '');
+
+        $max = db()->query($sql)->fetchColumn();
 
         $siguiente = max((int) $max, 144) + 1;
 
@@ -199,9 +227,12 @@ class Cotizacion
                          :tiempo_entrega_dias, :moneda, :observaciones, :condiciones,
                          :total_general, :cliente_subtotal, :cliente_igv, :cliente_total, :estado)';
 
+            // El numero se asigna AQUI, ya dentro de la transaccion, y se
+            // ignora el que venga del formulario: aquel se calculo al abrir
+            // la pantalla y para cuando se guarda puede estar tomado.
             $stmt = $pdo->prepare($sql);
             $stmt->execute(self::parametrosCabecera($datos, $totales, $clienteId) + [
-                ':numero' => $datos['numero'] ?? self::siguienteNumero(),
+                ':numero' => self::siguienteNumero(true),
                 ':estado' => $datos['estado'] ?? 'borrador',
             ]);
 

@@ -34,27 +34,75 @@ $flecha = static function (string $clave) use ($filtros): string {
 $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Aceptada', 'rechazada' => 'Rechazada'];
 ?>
 
+<?php
+/**
+ * Muestra un monto por moneda. Si solo hay soles, no ensucia con un
+ * "US$ 0.00" que no aporta nada.
+ */
+$importe = static function ($pen, $usd): string {
+    $partes = [];
+
+    if ((float) $pen != 0.0 || (float) $usd == 0.0) {
+        $partes[] = 'S/ ' . money($pen);
+    }
+    if ((float) $usd != 0.0) {
+        $partes[] = 'US$ ' . money($usd);
+    }
+
+    return implode(' · ', $partes);
+};
+?>
+
 <!-- ============ Resumen ============ -->
 <div class="tarjetas-resumen">
     <div class="resumen">
         <span class="resumen-ico"><?= icono('documento', 20) ?></span>
         <div>
             <span class="resumen-valor"><?= (int) $resumen['cantidad'] ?></span>
-            <span class="resumen-etq"><?= $hayFiltros ? 'Cotizaciones encontradas' : 'Cotizaciones totales' ?></span>
+            <span class="resumen-etq">
+                <?= $hayFiltros ? 'Encontradas' : 'Cotizaciones' ?>
+                <?php if ((int) $resumen['n_borrador'] > 0): ?>
+                    · <?= (int) $resumen['n_borrador'] ?> en borrador
+                <?php endif; ?>
+            </span>
         </div>
     </div>
+
     <div class="resumen">
-        <span class="resumen-ico"><?= icono('dinero', 20) ?></span>
+        <span class="resumen-ico"><?= icono('documento', 20) ?></span>
         <div>
-            <span class="resumen-valor">S/ <?= money($resumen['total_pen']) ?></span>
-            <span class="resumen-etq">Monto en soles</span>
+            <span class="resumen-valor"><?= e($importe($resumen['oferta_pen'], $resumen['oferta_usd'])) ?></span>
+            <span class="resumen-etq">
+                En oferta · <?= (int) $resumen['n_emitida'] ?>
+                <?= (int) $resumen['n_emitida'] === 1 ? 'enviada' : 'enviadas' ?> esperando respuesta
+            </span>
         </div>
     </div>
+
     <div class="resumen">
-        <span class="resumen-ico"><?= icono('dinero', 20) ?></span>
+        <span class="resumen-ico"><?= icono('check', 20) ?></span>
         <div>
-            <span class="resumen-valor">US$ <?= money($resumen['total_usd']) ?></span>
-            <span class="resumen-etq">Monto en dólares</span>
+            <span class="resumen-valor"><?= e($importe($resumen['ganado_pen'], $resumen['ganado_usd'])) ?></span>
+            <span class="resumen-etq">
+                Cerrado · <?= (int) $resumen['n_aceptada'] ?>
+                <?= (int) $resumen['n_aceptada'] === 1 ? 'aceptada' : 'aceptadas' ?>
+            </span>
+        </div>
+    </div>
+
+    <div class="resumen">
+        <span class="resumen-ico"><?= icono('calculadora', 20) ?></span>
+        <div>
+            <span class="resumen-valor">
+                <?= $resumen['tasa_cierre'] === null ? '—' : $resumen['tasa_cierre'] . '%' ?>
+            </span>
+            <span class="resumen-etq">
+                <?php if ($resumen['tasa_cierre'] === null): ?>
+                    Tasa de cierre · sin respuestas aún
+                <?php else: ?>
+                    Tasa de cierre · sobre <?= (int) $resumen['resueltas'] ?> con respuesta
+                <?php endif; ?>
+            </span>
         </div>
     </div>
 </div>

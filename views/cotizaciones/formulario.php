@@ -98,8 +98,14 @@ $configAlpine = [
         <h2>
             <?= icono(!empty($enModal) ? 'empresa' : 'documento', 15) ?>
             <?= !empty($enModal) ? 'Cliente y condiciones' : 'Cotización N° ' . e($numero) ?>
+            <?php if (!$editando): ?>
+                <span class="pista">— el N° <?= e($numero) ?> se confirma al guardar</span>
+            <?php endif; ?>
         </h2>
-        <input type="hidden" name="numero" value="<?= e($numero) ?>">
+        <?php if ($editando): ?>
+            <?php // Al editar el numero ya existe y no se recalcula. ?>
+            <input type="hidden" name="numero" value="<?= e($numero) ?>">
+        <?php endif; ?>
 
         <div class="grid grid-3">
             <div style="grid-column: span 2">
@@ -254,27 +260,27 @@ $configAlpine = [
                     <template x-for="(item, i) in items" :key="i">
                         <tr>
                             <td x-text="i + 1"></td>
-                            <td><input type="number" step="any" min="0" :name="`items[${i}][cantidad]`" x-model="item.cantidad"></td>
-                            <td><input type="text" :name="`items[${i}][codigo]`" x-model="item.codigo"></td>
-                            <td><input type="text" :name="`items[${i}][marca]`" x-model="item.marca"></td>
-                            <td><input type="text" :name="`items[${i}][descripcion]`" x-model="item.descripcion" required style="min-width:150px"></td>
+                            <td><input type="number" step="any" min="0" :name="`items[${i}][cantidad]`" :aria-label="`Cantidad del item ${i + 1}`" x-model="item.cantidad"></td>
+                            <td><input type="text" :name="`items[${i}][codigo]`" :aria-label="`Codigo del item ${i + 1}`" x-model="item.codigo"></td>
+                            <td><input type="text" :name="`items[${i}][marca]`" :aria-label="`Marca del item ${i + 1}`" x-model="item.marca"></td>
+                            <td><input type="text" :name="`items[${i}][descripcion]`" :aria-label="`Descripcion del item ${i + 1}`" x-model="item.descripcion" required style="min-width:150px"></td>
 
-                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][precio]`" x-model="item.precio"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][precio]`" :aria-label="`Precio sin IGV del item ${i + 1}`" x-model="item.precio"></td>
 
                             <td class="calculado" x-text="simbolo + ' ' + f(calcular(item).ir)"></td>
                             <td class="calculado" x-text="simbolo + ' ' + f(calcular(item).igv)"></td>
 
                             <td class="calculado opcional">
                                 <label>
-                                    <input type="checkbox" value="1" :name="`items[${i}][aplica_detraccion]`" x-model="item.aplica_detraccion">
+                                    <input type="checkbox" value="1" :name="`items[${i}][aplica_detraccion]`" :aria-label="`Aplicar detraccion al item ${i + 1}`" x-model="item.aplica_detraccion">
                                     <span x-text="item.aplica_detraccion ? simbolo + ' ' + f(calcular(item).detraccion) : '—'"></span>
                                 </label>
                             </td>
 
-                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][licencia_so]`" x-model="item.licencia_so"></td>
-                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][delivery]`" x-model="item.delivery"></td>
-                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][embalaje]`" x-model="item.embalaje"></td>
-                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][envio]`" x-model="item.envio"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][licencia_so]`" :aria-label="`Licencia S.O del item ${i + 1}`" x-model="item.licencia_so"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][delivery]`" :aria-label="`Delivery del item ${i + 1}`" x-model="item.delivery"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][embalaje]`" :aria-label="`Embalaje del item ${i + 1}`" x-model="item.embalaje"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][envio]`" :aria-label="`Envio del item ${i + 1}`" x-model="item.envio"></td>
 
                             <td class="calculado">
                                 <?php
@@ -284,7 +290,7 @@ $configAlpine = [
                                     // el desplegable mostraba 10% aunque el monto fuera el
                                     // correcto.
                                 ?>
-                                <select :name="`items[${i}][porcentaje_ganancia]`" x-model.number="item.porcentaje_ganancia">
+                                <select :name="`items[${i}][porcentaje_ganancia]`" :aria-label="`Porcentaje de ganancia del item ${i + 1}`" x-model.number="item.porcentaje_ganancia">
                                     <?php foreach ($ganancias as $g): ?>
                                         <option value="<?= e((string) $g) ?>"><?= round($g * 100) ?>%</option>
                                     <?php endforeach; ?>
@@ -296,7 +302,7 @@ $configAlpine = [
 
                             <td class="calculado opcional">
                                 <label>
-                                    <input type="checkbox" value="1" :name="`items[${i}][aplica_retencion]`" x-model="item.aplica_retencion">
+                                    <input type="checkbox" value="1" :name="`items[${i}][aplica_retencion]`" :aria-label="`Aplicar retencion al item ${i + 1}`" x-model="item.aplica_retencion">
                                     <span x-text="item.aplica_retencion ? simbolo + ' ' + f(calcular(item).retencion) : '—'"></span>
                                 </label>
                             </td>

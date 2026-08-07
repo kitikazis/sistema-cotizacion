@@ -76,7 +76,7 @@ $simbolo = simboloMoneda((string) $cotizacion['moneda']);
                     <td><?= e($item['codigo'] ?? '—') ?></td>
                     <td><?= e($item['marca'] ?? '—') ?></td>
                     <td><?= e($item['descripcion']) ?></td>
-                    <td class="num"><?= money($item['cantidad'], 0) ?></td>
+                    <td class="num"><?= cantidad($item['cantidad']) ?></td>
                     <td class="num"><?= money($item['precio'], 4) ?></td>
                     <td class="num"><?= money($item['ir'], 4) ?></td>
                     <td class="num"><?= money($item['igv'], 4) ?></td>
@@ -130,7 +130,7 @@ $simbolo = simboloMoneda((string) $cotizacion['moneda']);
                     <td><?= (int) $item['linea'] ?></td>
                     <td><?= e($item['codigo'] ?? '—') ?></td>
                     <td><?= e($item['marca'] ?? '—') ?></td>
-                    <td class="num"><?= money($item['cantidad'], 0) ?></td>
+                    <td class="num"><?= cantidad($item['cantidad']) ?></td>
                     <td><?= e($item['descripcion']) ?></td>
                     <td class="num"><?= money($item['precio_cliente_unitario']) ?></td>
                     <td class="num"><?= money((float) $item['precio_cliente_unitario'] * (float) $item['cantidad']) ?></td>

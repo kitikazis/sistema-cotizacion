@@ -84,7 +84,8 @@ $configAlpine = [
 
 <form method="post" action="<?= e(url($editando ? 'actualizar' : 'guardar')) ?>"
       x-data="cotizacionForm(<?= e(json_encode($configAlpine)) ?>)"
-      @submit="alEnviar($event)">
+      @submit="alEnviar($event)"
+      @reset-envio="enviando = false">
 
     <?= campoCsrf() ?>
 

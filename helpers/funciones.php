@@ -15,6 +15,25 @@ function money($valor, int $decimales = 2): string
     return number_format((float) $valor, $decimales, '.', ',');
 }
 
+/**
+ * Formatea una cantidad mostrando decimales solo si los tiene.
+ *
+ * 2 se ve como "2" y 2.5 como "2.5". Antes se formateaba con cero
+ * decimales y 2.5 unidades salian como "3" en el PDF: el cliente veia una
+ * cantidad que no cuadraba con el importe.
+ */
+function cantidad($valor): string
+{
+    $numero = (float) $valor;
+
+    if (abs($numero - round($numero)) < 0.0005) {
+        return number_format($numero, 0, '.', ',');
+    }
+
+    // Hasta 3 decimales, que es lo que admite la columna, sin ceros de cola.
+    return rtrim(rtrim(number_format($numero, 3, '.', ','), '0'), '.');
+}
+
 /** Simbolo de la moneda de la cotizacion. */
 function simboloMoneda(string $moneda): string
 {

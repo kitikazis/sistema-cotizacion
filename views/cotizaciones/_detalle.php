@@ -130,7 +130,7 @@ $vence = date(
                             <br><span class="pista"><?= e(implode(' · ', $meta)) ?></span>
                         <?php endif; ?>
                     </td>
-                    <td class="num"><?= money($item['cantidad'], 0) ?></td>
+                    <td class="num"><?= cantidad($item['cantidad']) ?></td>
                     <td class="num"><?= e($simbolo) ?> <?= money($item['precio_cliente_unitario']) ?></td>
                     <td class="num"><strong><?= e($simbolo) ?> <?= money($importe) ?></strong></td>
                 </tr>

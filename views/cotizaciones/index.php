@@ -295,6 +295,11 @@ $importe = static function ($pen, $usd): string {
             const formulario = ev.target;
 
             if (!formulario.reportValidity()) {
+                // El formulario ya se habia puesto en modo enviando; sin este
+                // aviso el boton quedaba en Guardando para siempre y habia que
+                // cerrar el modal. Pasa cuando mi validacion deja pasar pero la
+                // del navegador no, por ejemplo un item extra sin descripcion.
+                formulario.dispatchEvent(new CustomEvent('reset-envio'));
                 return;
             }
 

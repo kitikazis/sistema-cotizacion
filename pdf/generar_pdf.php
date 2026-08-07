@@ -149,11 +149,15 @@ function construirHtmlCotizacion(array $cotizacion, array $empresa): string
     /* ---------- Totales ---------- */
     .tot td { padding: 3.5pt 8pt; font-size: 8.8pt; }
     .tot .etq { text-align: right; color: #4b5563; }
-    .tot .val { text-align: right; font-weight: bold; width: 34%; }
+    /* nowrap en los importes: sin esto el TOTAL se partia en dos lineas,
+       con el simbolo de moneda arriba y la cifra debajo. */
+    .tot .val { text-align: right; font-weight: bold; width: 46%; white-space: nowrap; }
     .tot .final td {
         background: #1e40af; color: #fff;
-        font-size: 11pt; font-weight: bold; padding: 6pt 8pt;
+        font-size: 10.5pt; font-weight: bold; padding: 6pt 8pt;
+        white-space: nowrap;
     }
+    .tot .final .etq { color: #fff; letter-spacing: .5pt; }
 
     /* ---------- Pie ---------- */
     .bloque { margin-top: 11pt; }
@@ -268,7 +272,7 @@ function construirHtmlCotizacion(array $cotizacion, array $empresa): string
                         <br><span class="meta"><?= e(implode(' · ', $meta)) ?></span>
                     <?php endif; ?>
                 </td>
-                <td class="cen"><?= money($item['cantidad'], 0) ?></td>
+                <td class="cen"><?= cantidad($item['cantidad']) ?></td>
                 <td class="num"><?= e($simbolo) ?> <?= money($item['precio_cliente_unitario']) ?></td>
                 <td class="num"><?= e($simbolo) ?> <?= money($totalFila) ?></td>
             </tr>
@@ -298,8 +302,8 @@ function construirHtmlCotizacion(array $cotizacion, array $empresa): string
                         <td class="val"><?= e($simbolo) ?> <?= money($cotizacion['cliente_igv']) ?></td>
                     </tr>
                     <tr class="final">
-                        <td>TOTAL</td>
-                        <td class="num"><?= e($simbolo) ?> <?= money($cotizacion['cliente_total']) ?></td>
+                        <td class="etq">TOTAL</td>
+                        <td class="val"><?= e($simbolo) ?> <?= money($cotizacion['cliente_total']) ?></td>
                     </tr>
                 </table>
             </td>

@@ -1,0 +1,123 @@
+<?php
+/**
+ * Punto de entrada de la linea de comandos.
+ *
+ *   php consola                  lista los comandos
+ *   php consola migrar           crea o actualiza las tablas
+ *   php consola estado           diagnostico completo
+ *
+ * Equivale al "artisan" de Laravel, pero este proyecto es PHP vanilla:
+ * aqui no hay framework, solo un despachador que llama a los scripts de
+ * tools/ con un nombre facil de recordar.
+ *
+ * Sin extension .php a proposito, para escribir "php consola" y no
+ * "php consola.php". El .htaccess lo bloquea por HTTP y ademas el script
+ * se niega a correr fuera de la consola.
+ */
+
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('Este script solo se ejecuta por consola.');
+}
+
+$raiz = __DIR__;
+
+/** comando => [archivo que lo resuelve, descripcion] */
+$comandos = [
+    'migrar'         => ['tools/migrar.php',         'Crea o actualiza las tablas de la base'],
+    'migrar:estado'  => ['tools/migrar.php',         'Muestra que migraciones faltan, sin aplicarlas'],
+    'bd:probar'      => ['tools/probar_bd.php',      'Diagnostica la conexion y el .env'],
+    'usuario:crear'  => ['tools/crear_usuario.php',  'Da de alta un usuario del panel'],
+    'estado'         => [null,                       'Revision completa del sistema'],
+    'desplegar'      => ['tools/desplegar.sh',       'Trae los cambios de GitHub y reinstala'],
+];
+
+$comando = $argv[1] ?? null;
+
+// ---------------------------------------------------------------------
+// Ayuda
+// ---------------------------------------------------------------------
+if ($comando === null || in_array($comando, ['ayuda', 'help', '--help', '-h'], true)) {
+    echo 'Cotizador Enlix' . PHP_EOL . PHP_EOL;
+    echo 'Uso:' . PHP_EOL;
+    echo '  php consola <comando>' . PHP_EOL . PHP_EOL;
+    echo 'Comandos:' . PHP_EOL;
+
+    foreach ($comandos as $nombre => [$archivo, $descripcion]) {
+        printf('  %-16s %s%s', $nombre, $descripcion, PHP_EOL);
+    }
+
+    echo PHP_EOL . 'Ejemplos:' . PHP_EOL;
+    echo '  php consola migrar          crea las tablas que falten' . PHP_EOL;
+    echo '  php consola estado          revisa que todo este en orden' . PHP_EOL;
+    echo '  php consola usuario:crear   alta de usuario para el login' . PHP_EOL;
+    exit(0);
+}
+
+if (!isset($comandos[$comando])) {
+    fwrite(STDERR, "Comando desconocido: {$comando}" . PHP_EOL);
+    fwrite(STDERR, 'Ver los disponibles con: php consola' . PHP_EOL);
+    exit(1);
+}
+
+// ---------------------------------------------------------------------
+// estado: se resuelve aqui mismo, reusando las comprobaciones de la web
+// ---------------------------------------------------------------------
+if ($comando === 'estado') {
+    require_once $raiz . '/helpers/diagnostico.php';
+
+    $bloques = verificarSistema();
+    $fallos  = 0;
+
+    foreach ($bloques as $bloque) {
+        echo PHP_EOL . '=== ' . $bloque['titulo'] . ' ===' . PHP_EOL;
+
+        foreach ($bloque['verificaciones'] as $v) {
+            if (!$v['ok']) {
+                $fallos++;
+            }
+
+            printf("  %-5s %-32s %s%s", $v['ok'] ? 'ok' : 'FALLA', $v['nombre'], $v['detalle'], PHP_EOL);
+        }
+    }
+
+    echo PHP_EOL;
+    echo $fallos === 0
+        ? 'Todo funcionando.' . PHP_EOL
+        : "{$fallos} punto(s) por resolver." . PHP_EOL;
+
+    exit($fallos === 0 ? 0 : 1);
+}
+
+// ---------------------------------------------------------------------
+// desplegar: es un shell script, no PHP
+// ---------------------------------------------------------------------
+if ($comando === 'desplegar') {
+    echo 'Este comando es un script de shell. Ejecutalo asi:' . PHP_EOL;
+    echo '  bash tools/desplegar.sh' . PHP_EOL;
+    exit(0);
+}
+
+// ---------------------------------------------------------------------
+// El resto delega en tools/
+// ---------------------------------------------------------------------
+[$archivo] = $comandos[$comando];
+$ruta = $raiz . '/' . $archivo;
+
+if (!is_file($ruta)) {
+    fwrite(STDERR, "No se encontro {$archivo}" . PHP_EOL);
+    exit(1);
+}
+
+// Se reescribe $argv para que el script destino vea sus propios
+// argumentos y no los de consola.
+$resto = array_slice($argv, 2);
+
+if ($comando === 'migrar:estado') {
+    $resto[] = '--estado';
+}
+
+$argv = array_merge([$archivo], $resto);
+$argc = count($argv);
+
+require $ruta;

@@ -17,7 +17,7 @@ RedirectMatch 404 ^/(config|database|models|controllers|helpers|tests|vendor|sto
 
 # Archivos sueltos que tampoco deben salir.
 # El .env es el mas critico: lleva la clave de la base de datos.
-RedirectMatch 404 ^/(composer\.(json|lock)|README\.md|\.git|\.env)
+RedirectMatch 404 ^/(composer\.(json|lock)|README\.md|\.git|\.env|consola)
 
 <FilesMatch "\.(sql|md|lock|ini|log|bak|example\.php)$">
     Require all denied

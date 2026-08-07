@@ -34,6 +34,7 @@ class CotizacionController
             'numero'        => Cotizacion::siguienteNumero(),
             'empresaConfig' => configEmpresa(),
             'ganancias'     => PricingCalculator::GANANCIAS_PERMITIDAS,
+            'clientes'      => Cliente::listar(),
             'error'         => $_GET['error'] ?? null,
         ]);
     }
@@ -54,6 +55,7 @@ class CotizacionController
             'numero'        => $cotizacion['numero'],
             'empresaConfig' => configEmpresa(),
             'ganancias'     => PricingCalculator::GANANCIAS_PERMITIDAS,
+            'clientes'      => Cliente::listar(),
             'error'         => $_GET['error'] ?? null,
         ]);
     }
@@ -68,6 +70,7 @@ class CotizacionController
         $numero        = Cotizacion::siguienteNumero();
         $empresaConfig = configEmpresa();
         $ganancias     = PricingCalculator::GANANCIAS_PERMITIDAS;
+        $clientes      = Cliente::listar();
         $error         = null;
         $enModal       = true;
 
@@ -95,6 +98,7 @@ class CotizacionController
         $numero        = $cotizacion['numero'];
         $empresaConfig = configEmpresa();
         $ganancias     = PricingCalculator::GANANCIAS_PERMITIDAS;
+        $clientes      = Cliente::listar();
         $error         = null;
         // Lo lee la vista: dentro del modal, Cancelar cierra en vez de navegar.
         $enModal       = true;

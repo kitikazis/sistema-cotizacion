@@ -45,11 +45,28 @@ foreach ($cotizacion['items'] ?? [] as $item) {
     ];
 }
 
+// Clientes ya registrados, para autocompletar. Se manda solo lo que hace
+// falta: con cientos de clientes, mandar la fila entera engorda la pagina.
+$clientesJs = [];
+foreach ($clientes ?? [] as $cl) {
+    $clientesJs[] = [
+        'nombre'    => $cl['razon_social'],
+        'ruc'       => (string) ($cl['ruc'] ?? ''),
+        'direccion' => (string) ($cl['direccion'] ?? ''),
+    ];
+}
+
 $configAlpine = [
     'ganancias' => $ganancias,
     'items'     => $itemsIniciales,
     'moneda'    => (string) $val('moneda', 'PEN'),
     'formaPago' => (string) $val('forma_pago', 'contado'),
+    'clientes'  => $clientesJs,
+    'cliente'   => [
+        'empresa'   => (string) $val('empresa'),
+        'ruc'       => (string) $val('ruc'),
+        'direccion' => (string) $val('direccion'),
+    ],
 ];
 ?>
 
@@ -66,7 +83,8 @@ $configAlpine = [
 <?php endif; ?>
 
 <form method="post" action="<?= e(url($editando ? 'actualizar' : 'guardar')) ?>"
-      x-data="cotizacionForm(<?= e(json_encode($configAlpine)) ?>)">
+      x-data="cotizacionForm(<?= e(json_encode($configAlpine)) ?>)"
+      @submit="alEnviar($event)">
 
     <?= campoCsrf() ?>
 
@@ -85,19 +103,50 @@ $configAlpine = [
 
         <div class="grid grid-3">
             <div style="grid-column: span 2">
-                <label for="empresa">Empresa *</label>
+                <label for="empresa">Empresa <span class="obligatorio" aria-hidden="true">*</span></label>
+                <?php
+                    // Autocompleta con los clientes ya registrados: al elegir
+                    // uno se rellenan RUC y direccion. Evita tipear de nuevo y
+                    // evita crear un cliente duplicado por una tilde de mas.
+                ?>
                 <input type="text" id="empresa" name="empresa" required
+                       list="lista-clientes" autocomplete="off"
                        placeholder="Razón social del cliente"
-                       value="<?= e($val('empresa')) ?>">
+                       x-model="cliente.empresa"
+                       @input="autocompletarCliente()"
+                       @blur="tocado.empresa = true"
+                       :aria-invalid="errorEmpresa ? 'true' : 'false'"
+                       aria-describedby="error-empresa">
+
+                <datalist id="lista-clientes">
+                    <?php foreach ($clientes ?? [] as $cl): ?>
+                        <option value="<?= e($cl['razon_social']) ?>">
+                            <?= e($cl['ruc'] ? 'RUC ' . $cl['ruc'] : '') ?>
+                        </option>
+                    <?php endforeach; ?>
+                </datalist>
+
+                <p class="error-campo" id="error-empresa" x-show="errorEmpresa" x-cloak style="display:none"
+                   x-text="errorEmpresa"></p>
             </div>
             <div>
                 <label for="ruc">RUC</label>
-                <input type="text" id="ruc" name="ruc" maxlength="11" placeholder="20xxxxxxxxx"
-                       value="<?= e($val('ruc')) ?>">
+                <?php // inputmode numeric: en movil abre el teclado de numeros. ?>
+                <input type="text" id="ruc" name="ruc" maxlength="11"
+                       inputmode="numeric" pattern="[0-9]{11}" autocomplete="off"
+                       placeholder="20xxxxxxxxx"
+                       x-model="cliente.ruc"
+                       @blur="tocado.ruc = true"
+                       :aria-invalid="errorRuc ? 'true' : 'false'"
+                       aria-describedby="error-ruc">
+
+                <p class="error-campo" id="error-ruc" x-show="errorRuc" x-cloak style="display:none"
+                   x-text="errorRuc"></p>
             </div>
             <div style="grid-column: span 2">
                 <label for="direccion">Dirección</label>
-                <input type="text" id="direccion" name="direccion" value="<?= e($val('direccion')) ?>">
+                <input type="text" id="direccion" name="direccion"
+                       autocomplete="off" x-model="cliente.direccion">
             </div>
             <div>
                 <label for="fecha_emision">Fecha de emisión</label>
@@ -385,8 +434,15 @@ $configAlpine = [
                     <?= icono('equis') ?> Cancelar
                 </a>
             <?php endif; ?>
-            <button type="submit" class="btn btn-primario">
-                <?= icono('guardar') ?> <?= $editando ? 'Actualizar cotización' : 'Guardar cotización' ?>
+            <?php // Deshabilitado mientras haya errores o el envio este en curso. ?>
+            <button type="submit" class="btn btn-primario"
+                    :disabled="!puedeGuardar"
+                    :title="puedeGuardar ? '' : (errorItems || 'Falta completar la empresa o corregir el RUC')">
+                <span x-show="!enviando"><?= icono('guardar') ?></span>
+                <span x-show="enviando" x-cloak style="display:none" class="girando"><?= icono('flecha') ?></span>
+                <span x-text="enviando
+                    ? 'Guardando…'
+                    : '<?= $editando ? 'Actualizar cotización' : 'Guardar cotización' ?>'"></span>
             </button>
         </div>
     </div>

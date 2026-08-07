@@ -19,6 +19,91 @@ document.addEventListener('alpine:init', () => {
         formaPago: config.formaPago || 'contado',
         items: [],
 
+        // ---- Cliente y validacion ----
+        clientes: config.clientes || [],
+        cliente: config.cliente || { empresa: '', ruc: '', direccion: '' },
+        // Un campo solo muestra su error despues de visitarlo: marcar en rojo
+        // algo que el usuario todavia no toco es hostil.
+        tocado: { empresa: false, ruc: false },
+        enviando: false,
+
+        /**
+         * Al escribir un nombre que coincide con un cliente ya registrado,
+         * completa RUC y direccion. Solo rellena lo que este vacio, para no
+         * pisar una correccion hecha a mano.
+         */
+        autocompletarCliente() {
+            const nombre = (this.cliente.empresa || '').trim().toLowerCase();
+            const hallado = this.clientes.find((c) => c.nombre.toLowerCase() === nombre);
+
+            if (!hallado) {
+                return;
+            }
+
+            if (!this.cliente.ruc) {
+                this.cliente.ruc = hallado.ruc;
+            }
+            if (!this.cliente.direccion) {
+                this.cliente.direccion = hallado.direccion;
+            }
+        },
+
+        get errorEmpresa() {
+            if (!this.tocado.empresa) {
+                return '';
+            }
+
+            return (this.cliente.empresa || '').trim() === ''
+                ? 'Escribe la razón social del cliente.'
+                : '';
+        },
+
+        get errorRuc() {
+            const ruc = (this.cliente.ruc || '').trim();
+
+            if (!this.tocado.ruc || ruc === '') {
+                return '';   // el RUC es opcional
+            }
+
+            if (!/^\d+$/.test(ruc)) {
+                return 'El RUC solo lleva números.';
+            }
+
+            if (ruc.length !== 11) {
+                return `El RUC tiene 11 dígitos; escribiste ${ruc.length}.`;
+            }
+
+            return '';
+        },
+
+        /** ¿Hay al menos un item con descripcion? */
+        get errorItems() {
+            return this.items.some((i) => (i.descripcion || '').trim() !== '')
+                ? ''
+                : 'Agrega al menos un ítem con descripción.';
+        },
+
+        get puedeGuardar() {
+            return !this.enviando
+                && (this.cliente.empresa || '').trim() !== ''
+                && this.errorRuc === ''
+                && this.errorItems === '';
+        },
+
+        /** Marca todo como visitado para que los errores salgan a la vista. */
+        alEnviar(ev) {
+            this.tocado.empresa = true;
+            this.tocado.ruc = true;
+
+            if (!this.puedeGuardar) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                return;
+            }
+
+            this.enviando = true;
+        },
+
         init() {
             // Al editar llegan los items ya guardados; al crear, una fila vacia.
             if (Array.isArray(config.items) && config.items.length > 0) {

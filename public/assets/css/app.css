@@ -130,6 +130,28 @@ body {
 .grid-4 { grid-template-columns: repeat(4, 1fr); }
 
 label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; color: var(--tenue); }
+.obligatorio { color: var(--rojo); }
+
+/* Error de campo: se muestra bajo el input, en cuanto el usuario sale de
+   el, y dice que corregir en concreto. */
+.error-campo {
+    margin: 5px 0 0;
+    font-size: 12px;
+    color: var(--rojo);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.error-campo::before { content: "⚠"; font-size: 11px; }
+input[aria-invalid="true"] { border-color: var(--rojo); background: #fffafa; }
+input[aria-invalid="true"]:focus { outline-color: #fecaca; }
+
+/* Giro del icono mientras se guarda. */
+@keyframes girar { to { transform: rotate(360deg); } }
+.girando { display: inline-flex; animation: girar .9s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+    .girando { animation: none; }
+}
 
 /* Enumerar cada type es fragil: uno nuevo se queda sin estilo y sale
    angosto. Se excluyen solo los que no son campos de texto.
@@ -177,6 +199,10 @@ tbody tr:last-child td { border-bottom: none; }
 .tabla-listado th:last-child,  .tabla-listado td:last-child  { padding-right: 24px; }
 
 .tabla-scroll { overflow-x: auto; position: relative; }
+
+/* Ocupa todo el ancho disponible: si sobra espacio las columnas se
+   reparten en vez de dejar un hueco muerto a la derecha. */
+.tabla-items { width: 100%; }
 .tabla-items input, .tabla-items select { padding: 5px 6px; font-size: 12px; min-width: 58px; }
 .tabla-items input[type="checkbox"] { min-width: auto; }
 .tabla-items th, .tabla-items td { padding: 6px 5px; }
@@ -304,17 +330,22 @@ tbody tr:last-child td { border-bottom: none; }
     justify-content: space-between;
     gap: 24px;
     flex-wrap: wrap;
-    margin-top: 18px;
-    padding-top: 16px;
+    margin-top: 14px;
+    padding-top: 14px;
     border-top: 1px solid var(--borde);
 }
 .panel-totales-nota {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
     font-size: 12px;
     color: var(--tenue);
-    max-width: 320px;
-    line-height: 1.5;
+    max-width: 340px;
+    line-height: 1.45;
 }
+.panel-totales-nota .ico { flex-shrink: 0; margin-top: 2px; }
 .panel-totales .totales { margin: 0; }
+.panel-totales .totales div { padding: 4px 0; }
 
 /* ---------------------------------------------------------------
    Barra fija de guardado
@@ -630,7 +661,10 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
 }
 .modal-cuerpo-form {
     flex: 1;
+    /* Solo vertical: el scroll horizontal lo maneja la tabla de items en su
+       propio contenedor, no el modal entero. */
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 16px 18px 0;
     background: var(--fondo);
 }
@@ -649,10 +683,12 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
    dentro del formulario, si se llega al final el gesto arrastraba la
    pagina de atras. */
 body.sin-scroll { overflow: hidden; }
-/* La barra de guardar se pega al fondo del area scrolleable del modal. */
+/* La barra de guardar se pega al fondo del area scrolleable del modal.
+   Los margenes negativos igualan el padding del contenedor: con -20px
+   contra 18px sobresalia 2px por lado y aparecia scroll horizontal. */
 .modal-cuerpo-form .barra-guardar {
-    margin: 18px -20px 0;
-    padding: 14px 20px;
+    margin: 16px -18px 0;
+    padding: 14px 18px;
 }
 
 /* Velo de guardado: evita doble envio y da senal de que algo pasa. */
@@ -995,6 +1031,17 @@ body.sin-scroll { overflow: hidden; }
 @media (max-width: 640px) {
     body { font-size: 13.5px; }
 
+    /* 16px es el minimo que evita que iOS haga zoom al enfocar un campo.
+       Con menos, cada toque desplaza la pagina y hay que volver a encuadrar. */
+    input, select, textarea { font-size: 16px; }
+
+    /* WCAG 2.1 AA pide 44x44 de area tactil. Los iconos de accion se
+       quedaban en 28px: se fallaba el toque constantemente. */
+    .btn-ico { width: 44px; height: 44px; }
+    .btn { min-height: 44px; }
+    .acciones { gap: 4px; }
+    input[type="checkbox"] { width: 20px; height: 20px; }
+
     /* Solo queda lo imprescindible: numero, empresa, total y acciones. */
     .tabla-listado th:nth-child(4), .tabla-listado td:nth-child(4),
     .tabla-listado th:nth-child(7), .tabla-listado td:nth-child(7) { display: none; }
@@ -1018,8 +1065,6 @@ body.sin-scroll { overflow: hidden; }
     .tabla-listado th:first-child, .tabla-listado td:first-child { padding-left: 6px; }
     .tabla-listado th:last-child,  .tabla-listado td:last-child  { padding-right: 6px; }
     .tabla-listado th, .tabla-listado td { padding-left: 6px; padding-right: 6px; }
-    .acciones { gap: 2px; }
-    .btn-ico { width: 28px; height: 28px; }
 
     /* El pie de los modales se apila para que los botones no se aplasten. */
     .modal-pie { flex-direction: column-reverse; }

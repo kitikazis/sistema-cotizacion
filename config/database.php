@@ -33,8 +33,9 @@ function configBaseDatos(): array
     $archivo = __DIR__ . '/credenciales.php';
 
     if (!is_file($archivo)) {
-        http_response_code(500);
-        exit(
+        // Se lanza en vez de cortar: asi la pantalla de estado puede
+        // capturarlo y explicarlo, en lugar de morir con un texto pelado.
+        throw new RuntimeException(
             'Falta config/credenciales.php con los datos de la base de datos '
             . 'de produccion. Copiar config/credenciales.example.php y completarlo.'
         );
@@ -63,24 +64,16 @@ function db(): PDO
         $cfg['base']
     );
 
-    try {
-        $pdo = new PDO($dsn, $cfg['usuario'], $cfg['clave'], [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            // Necesario para que los DECIMAL lleguen como string y no pierdan
-            // precision al convertirse a float por el driver.
-            PDO::ATTR_STRINGIFY_FETCHES  => false,
-            PDO::ATTR_EMULATE_PREPARES   => false,
-        ]);
-    } catch (PDOException $e) {
-        // El mensaje del driver lleva usuario y host: solo al log.
-        error_log('Fallo la conexion a la base de datos: ' . $e->getMessage());
-
-        http_response_code(500);
-        exit(esProduccion()
-            ? 'No se pudo conectar a la base de datos.'
-            : 'No se pudo conectar a la base de datos: ' . $e->getMessage());
-    }
+    // Se deja propagar la PDOException: index.php la captura y muestra una
+    // pantalla util con el enlace al diagnostico.
+    $pdo = new PDO($dsn, $cfg['usuario'], $cfg['clave'], [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        // Necesario para que los DECIMAL lleguen como string y no pierdan
+        // precision al convertirse a float por el driver.
+        PDO::ATTR_STRINGIFY_FETCHES  => false,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ]);
 
     return $pdo;
 }

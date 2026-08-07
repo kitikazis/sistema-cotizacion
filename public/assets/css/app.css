@@ -358,6 +358,30 @@ h2 .ico { margin-right: 6px; color: var(--azul); vertical-align: -0.15em; }
 .pantalla-login .aviso { font-size: 12.5px; }
 .pantalla-login .pie { margin-top: 18px; padding: 0; }
 
+/* =====================================================================
+   Pantalla de estado
+   ===================================================================== */
+.estado-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+.estado-cabecera strong { display: block; font-size: 16px; }
+.estado-cabecera span { font-size: 13px; opacity: .85; }
+.estado-ok  { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+.estado-mal { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+.tabla-estado td { padding: 8px 6px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+.tabla-estado tr:last-child td { border-bottom: none; }
+.estado-ico { width: 24px; }
+.estado-ico.si { color: var(--verde); }
+.estado-ico.no { color: var(--rojo); }
+.estado-nombre { width: 34%; font-weight: 600; }
+.estado-detalle { color: var(--tenue); font-size: 12.5px; }
+
 /* Cinta de aviso del modo prueba. Deliberadamente molesta: esta para que
    nadie deje el acceso abierto por olvido. */
 .cinta-aviso {

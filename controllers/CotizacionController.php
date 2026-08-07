@@ -319,6 +319,33 @@ class CotizacionController
         generarPdfCotizacion($cotizacion, $descargar);
     }
 
+    /**
+     * Cambia el estado de una cotizacion.
+     *
+     * Es manual a proposito: marcar una cotizacion como emitida al generar
+     * el PDF la daria por enviada aunque solo se estuviera revisando.
+     */
+    public function cambiarEstado(): void
+    {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            redirigir(url());
+        }
+
+        validarCsrf();
+
+        $id     = (int) ($_POST['id'] ?? 0);
+        $estado = (string) ($_POST['estado'] ?? '');
+
+        try {
+            Cotizacion::cambiarEstado($id, $estado);
+        } catch (InvalidArgumentException $e) {
+            http_response_code(422);
+            exit($e->getMessage());
+        }
+
+        redirigir(url());
+    }
+
     /** Baja. */
     public function eliminar(): void
     {

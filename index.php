@@ -44,6 +44,7 @@ const ACCIONES_PRIVADAS = [
     'editar'     => [CotizacionController::class, 'editar'],
     'editarfrag' => [CotizacionController::class, 'editarFragmento'],
     'exportar'   => [CotizacionController::class, 'exportar'],
+    'estadocot'  => [CotizacionController::class, 'cambiarEstado'],
     'actualizar' => [CotizacionController::class, 'actualizar'],
     'ver'        => [CotizacionController::class, 'ver'],
     'detalle'    => [CotizacionController::class, 'detalle'],

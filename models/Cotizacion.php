@@ -336,6 +336,49 @@ class Cotizacion
         }
     }
 
+    /** Estados por los que puede pasar una cotizacion. */
+    public const ESTADOS = ['borrador', 'emitida', 'aceptada', 'rechazada'];
+
+    /**
+     * Cambia el estado de una cotizacion.
+     *
+     * No se tocan los montos: cambiar de estado no re-cotiza nada.
+     *
+     * @throws InvalidArgumentException si el estado no es uno de los validos.
+     */
+    public static function cambiarEstado(int $id, string $estado): bool
+    {
+        if (!in_array($estado, self::ESTADOS, true)) {
+            throw new InvalidArgumentException("Estado no valido: {$estado}");
+        }
+
+        $stmt = db()->prepare('UPDATE cotizaciones SET estado = ? WHERE id = ?');
+        $stmt->execute([$estado, $id]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * ¿Se le paso la fecha de validez?
+     *
+     * Se calcula al vuelo y no se guarda: el estado sigue siendo el que se
+     * puso a mano. Asi, si el cliente responde tarde, la cotizacion se puede
+     * aceptar igual. Una ya aceptada o rechazada nunca se marca vencida:
+     * su historia ya termino.
+     */
+    public static function estaVencida(array $cotizacion): bool
+    {
+        if (in_array($cotizacion['estado'], ['aceptada', 'rechazada'], true)) {
+            return false;
+        }
+
+        $limite = strtotime(
+            (string) $cotizacion['fecha_emision'] . ' +' . (int) $cotizacion['validez_dias'] . ' days'
+        );
+
+        return $limite !== false && $limite < strtotime('today');
+    }
+
     /**
      * Elimina una cotizacion (los items caen por ON DELETE CASCADE).
      * El cliente se conserva: puede tener otras cotizaciones.

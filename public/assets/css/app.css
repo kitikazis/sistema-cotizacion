@@ -935,8 +935,31 @@ body.sin-scroll { overflow: hidden; }
 }
 .form-salir { display: inline-flex; margin: 0; }
 
+/* =====================================================================
+   Acciones de estado en el pie del detalle
+   ===================================================================== */
+.modal-pie-estado { justify-content: space-between; flex-wrap: wrap; }
+.acciones-estado { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.btn-estado-emitir   { border-color: #bfdbfe; color: var(--azul); background: var(--azul-claro); }
+.btn-estado-emitir:hover { background: #dbeafe; }
+.btn-estado-aceptar  { border-color: #a7f3d0; color: var(--verde); background: #ecfdf5; }
+.btn-estado-aceptar:hover { background: #d1fae5; }
+.btn-estado-rechazar { border-color: #fecaca; color: var(--rojo); background: #fef2f2; }
+.btn-estado-rechazar:hover { background: #fee2e2; }
+.btn-volver-borrador { color: var(--tenue); }
+.btn[disabled] { opacity: .55; cursor: default; }
+
 /* Estados */
 .etiqueta-borrador  { background: #f1f5f9; color: #475569; }
+/* Vencida no es un estado guardado: sale de comparar fechas. Por eso va
+   con borde, para distinguirla de las etiquetas de estado real. */
+.etiqueta-vencida {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+    margin-left: 4px;
+}
 .etiqueta-emitida   { background: var(--azul-claro); color: var(--azul); }
 .etiqueta-aceptada  { background: #ecfdf5; color: var(--verde); }
 .etiqueta-rechazada { background: #fef2f2; color: var(--rojo); }

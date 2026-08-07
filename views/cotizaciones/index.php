@@ -180,6 +180,35 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
             window.abrirNuevaCotizacion = () => this.abrirNueva();
         },
 
+        // ---- Estado de la cotizacion ----
+        // Se cambia a mano: marcar como emitida al descargar el PDF la
+        // daria por enviada aunque solo se estuviera revisando.
+        cambiandoEstado: false,
+
+        async cambiarEstado(id, estado) {
+            this.cambiandoEstado = true;
+
+            const datos = new FormData();
+            datos.append('csrf', <?= e(json_encode(tokenCsrf())) ?>);
+            datos.append('id', id);
+            datos.append('estado', estado);
+
+            try {
+                const r = await fetch('index.php?accion=estadocot', { method: 'POST', body: datos });
+
+                if (r.ok) {
+                    location.reload();
+                    return;
+                }
+
+                alert('No se pudo cambiar el estado (HTTP ' + r.status + ').');
+            } catch (e) {
+                alert('Sin conexión con el servidor.');
+            }
+
+            this.cambiandoEstado = false;
+        },
+
         abrirNueva() {
             this.cargarFormulario(
                 { titulo: 'Nueva cotización', subtitulo: 'Se asigna el siguiente correlativo' },
@@ -284,7 +313,11 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                             'fecha'   => date('d/m/Y', strtotime((string) $c['fecha_emision'])),
                             'items'   => (int) $c['items'],
                             'total'   => simboloMoneda((string) $c['moneda']) . ' ' . money($c['cliente_total']),
+                            'estado'  => $c['estado'],
                         ], JSON_UNESCAPED_UNICODE);
+
+                        // Se calcula al vuelo: el estado guardado no cambia solo.
+                        $vencida = Cotizacion::estaVencida($c);
                     ?>
                     <tr>
                         <td><span class="folio"><?= e($c['numero']) ?></span></td>
@@ -297,7 +330,16 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                         <td class="num">
                             <strong class="monto"><?= e(simboloMoneda((string) $c['moneda'])) ?> <?= money($c['cliente_total']) ?></strong>
                         </td>
-                        <td><span class="etiqueta etiqueta-<?= e($c['estado']) ?>"><?= e($estados[$c['estado']] ?? $c['estado']) ?></span></td>
+                        <td>
+                            <span class="etiqueta etiqueta-<?= e($c['estado']) ?>">
+                                <?= e($estados[$c['estado']] ?? $c['estado']) ?>
+                            </span>
+                            <?php if ($vencida): ?>
+                                <span class="etiqueta etiqueta-vencida" title="Se pasó la fecha de validez">
+                                    Vencida
+                                </span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <div class="acciones">
                                 <button type="button" class="btn-ico" title="Ver detalle"
@@ -347,7 +389,46 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                 <div x-show="!cargando" x-html="html"></div>
             </div>
 
-            <div class="modal-pie">
+            <div class="modal-pie modal-pie-estado">
+                <?php
+                    // Acciones de estado, segun donde este la cotizacion en su
+                    // ciclo. Solo se ofrece el paso siguiente y la vuelta atras,
+                    // para no llenar el pie de botones.
+                ?>
+                <div class="acciones-estado">
+                    <template x-if="detalle?.estado === 'borrador'">
+                        <button type="button" class="btn btn-estado-emitir"
+                                :disabled="cambiandoEstado"
+                                @click="cambiarEstado(detalle.id, 'emitida')">
+                            <?= icono('documento') ?> Marcar como enviada
+                        </button>
+                    </template>
+
+                    <template x-if="detalle?.estado === 'emitida'">
+                        <span class="acciones-estado">
+                            <button type="button" class="btn btn-estado-aceptar"
+                                    :disabled="cambiandoEstado"
+                                    @click="cambiarEstado(detalle.id, 'aceptada')">
+                                <?= icono('check') ?> Aceptada
+                            </button>
+                            <button type="button" class="btn btn-estado-rechazar"
+                                    :disabled="cambiandoEstado"
+                                    @click="cambiarEstado(detalle.id, 'rechazada')">
+                                <?= icono('equis') ?> Rechazada
+                            </button>
+                        </span>
+                    </template>
+
+                    <template x-if="detalle && detalle.estado !== 'borrador'">
+                        <button type="button" class="btn btn-sm btn-volver-borrador"
+                                :disabled="cambiandoEstado"
+                                @click="cambiarEstado(detalle.id, 'borrador')"
+                                title="Deshacer: la devuelve a borrador">
+                            <?= icono('volver') ?> Volver a borrador
+                        </button>
+                    </template>
+                </div>
+
                 <button type="button" class="btn" @click="detalle = null">Cerrar</button>
                 <?php
                     // Sin boton Editar: sacaba del listado hacia la pantalla

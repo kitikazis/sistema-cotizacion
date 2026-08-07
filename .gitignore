@@ -15,10 +15,18 @@
 # correo y el celular del gerente quedan visibles. Para revertirlo, volver
 # a ignorarlo aqui y ejecutar: git rm --cached config/empresa.php
 
-# Firma escaneada del gerente. Fuera del repo a proposito: con ella se puede
-# falsificar un documento firmado. Se copia a mano en cada instalacion; si
-# falta, el PDF se genera igual pero sin firma.
-/pdf/firma*.png
+# La firma escaneada SI se versiona, por pedido expreso del propietario, para
+# que llegue con el git pull y no haya que subirla a mano en cada servidor.
+#
+# Se versiona solo firma-transparente.png, que es la que usa el PDF. El
+# escaneo original (firma.png) se queda fuera: no aporta nada y tiene fondo
+# gris que sobre el PDF blanco se ve como un recuadro.
+#
+# Para revertirlo: descomentar la linea de abajo y ejecutar
+#   git rm --cached pdf/firma-transparente.png
+# Ojo que eso lo saca del estado actual pero no del historial.
+# /pdf/firma*.png
+/pdf/firma.png
 
 # PDFs generados en tiempo de ejecucion
 /storage/*.pdf

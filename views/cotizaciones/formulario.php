@@ -223,10 +223,17 @@ $configAlpine = [
                             <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][envio]`" x-model="item.envio"></td>
 
                             <td class="calculado">
+                                <?php
+                                    // Las opciones se pintan aqui y no con un x-for anidado:
+                                    // con x-for, x-model corre antes de que existan y no puede
+                                    // seleccionar el valor guardado. Al editar un item con 20%
+                                    // el desplegable mostraba 10% aunque el monto fuera el
+                                    // correcto.
+                                ?>
                                 <select :name="`items[${i}][porcentaje_ganancia]`" x-model.number="item.porcentaje_ganancia">
-                                    <template x-for="g in ganancias" :key="g">
-                                        <option :value="g" x-text="pct(g)"></option>
-                                    </template>
+                                    <?php foreach ($ganancias as $g): ?>
+                                        <option value="<?= e((string) $g) ?>"><?= round($g * 100) ?>%</option>
+                                    <?php endforeach; ?>
                                 </select>
                                 <div x-text="simbolo + ' ' + f(calcular(item).ganancia)"></div>
                             </td>
@@ -363,9 +370,16 @@ $configAlpine = [
         </div>
 
         <div class="barra-guardar-acciones">
-            <a class="btn" href="<?= e($editando ? url('ver', ['id' => $cotizacion['id']]) : url()) ?>">
-                <?= icono('equis') ?> Cancelar
-            </a>
+            <?php if (!empty($enModal)): ?>
+                <?php // Dentro del modal, cancelar lo cierra en vez de navegar. ?>
+                <button type="button" class="btn" @click="$dispatch('cerrar-edicion')">
+                    <?= icono('equis') ?> Cancelar
+                </button>
+            <?php else: ?>
+                <a class="btn" href="<?= e($editando ? url('ver', ['id' => $cotizacion['id']]) : url()) ?>">
+                    <?= icono('equis') ?> Cancelar
+                </a>
+            <?php endif; ?>
             <button type="submit" class="btn btn-primario">
                 <?= icono('guardar') ?> <?= $editando ? 'Actualizar cotización' : 'Guardar cotización' ?>
             </button>

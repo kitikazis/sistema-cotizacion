@@ -143,6 +143,59 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
             }
 
             this.cargando = false;
+        },
+
+        // ---- Edicion en modal ----
+        editando: null,
+        htmlEdicion: '',
+        guardando: false,
+
+        async abrirEdicion(c) {
+            this.editando = c;
+            this.htmlEdicion = '';
+            this.cargando = true;
+
+            try {
+                const r = await fetch('index.php?accion=editarfrag&id=' + c.id);
+                this.htmlEdicion = r.ok
+                    ? await r.text()
+                    : '<p class=&quot;aviso aviso-error&quot;>No se pudo cargar el formulario.</p>';
+            } catch (e) {
+                this.htmlEdicion = '<p class=&quot;aviso aviso-error&quot;>Sin conexión con el servidor.</p>';
+            }
+
+            this.cargando = false;
+        },
+
+        // El formulario apunta a ?accion=actualizar y termina en redireccion.
+        // Se envia por fetch para no salir del listado: si responde bien se
+        // recarga la pagina y los totales quedan al dia.
+        async guardarEdicion(ev) {
+            const formulario = ev.target;
+
+            if (!formulario.reportValidity()) {
+                return;
+            }
+
+            this.guardando = true;
+
+            try {
+                const r = await fetch(formulario.action, {
+                    method: 'POST',
+                    body: new FormData(formulario),
+                });
+
+                if (r.ok) {
+                    location.reload();
+                    return;
+                }
+
+                alert('No se pudo guardar (HTTP ' + r.status + ').');
+            } catch (e) {
+                alert('Sin conexión con el servidor.');
+            }
+
+            this.guardando = false;
         }
      }">
     <h2><?= icono('documento', 15) ?> Cotizaciones emitidas</h2>
@@ -207,7 +260,10 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                                         @click="verDetalle(<?= e($paraModal) ?>)">
                                     <?= icono('ojo') ?>
                                 </button>
-                                <a class="btn-ico" title="Editar" href="<?= e(url('editar', ['id' => $c['id']])) ?>"><?= icono('lapiz') ?></a>
+                                <button type="button" class="btn-ico" title="Editar"
+                                        @click="abrirEdicion(<?= e($paraModal) ?>)">
+                                    <?= icono('lapiz') ?>
+                                </button>
                                 <a class="btn-ico" title="Descargar PDF" href="<?= e(url('pdf', ['id' => $c['id'], 'descargar' => 1])) ?>"><?= icono('descargar') ?></a>
                                 <button type="button" class="btn-ico btn-ico-peligro" title="Eliminar"
                                         @click="porEliminar = <?= e($paraModal) ?>">
@@ -260,6 +316,39 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                 <a class="btn btn-primario" :href="'index.php?accion=pdf&descargar=1&id=' + detalle?.id">
                     <?= icono('descargar') ?> Descargar PDF
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ Edición ============ -->
+    <div class="modal-fondo" style="display:none" x-show="editando" x-cloak x-transition.opacity
+         @keydown.escape.window="editando = null"
+         role="dialog" aria-modal="true">
+
+        <div class="modal modal-completo" x-show="editando" x-transition>
+            <div class="modal-cabecera modal-cabecera-neutra">
+                <span class="modal-ico modal-ico-azul"><?= icono('lapiz', 20) ?></span>
+                <div>
+                    <strong>Editar cotización N° <span x-text="editando?.numero"></span></strong>
+                    <span x-text="editando?.empresa"></span>
+                </div>
+                <button type="button" class="modal-cerrar" @click="editando = null" title="Cerrar">
+                    <?= icono('equis', 18) ?>
+                </button>
+            </div>
+
+            <?php // El submit del formulario inyectado burbujea hasta aqui. ?>
+            <div class="modal-cuerpo modal-cuerpo-form"
+                 @submit.prevent="guardarEdicion($event)"
+                 @cerrar-edicion="editando = null">
+                <template x-if="cargando">
+                    <p class="det-cargando">Cargando formulario…</p>
+                </template>
+                <div x-show="!cargando" x-html="htmlEdicion"></div>
+            </div>
+
+            <div class="modal-velo" x-show="guardando" x-cloak style="display:none">
+                <p>Guardando…</p>
             </div>
         </div>
     </div>

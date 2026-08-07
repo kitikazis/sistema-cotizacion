@@ -66,6 +66,34 @@ class CotizacionController
         ]);
     }
 
+    /**
+     * Formulario de edicion suelto, sin layout, para el modal del listado.
+     *
+     * Reusa la misma vista que la pantalla completa: si divergieran, un
+     * campo agregado en una faltaria en la otra.
+     */
+    public function editarFragmento(): void
+    {
+        $cotizacion = Cotizacion::obtener((int) ($_GET['id'] ?? 0));
+
+        if ($cotizacion === null) {
+            http_response_code(404);
+            exit('<p class="aviso aviso-error">Cotización no encontrada.</p>');
+        }
+
+        header('Content-Type: text/html; charset=UTF-8');
+
+        $titulo        = '';
+        $numero        = $cotizacion['numero'];
+        $empresaConfig = configEmpresa();
+        $ganancias     = PricingCalculator::GANANCIAS_PERMITIDAS;
+        $error         = null;
+        // Lo lee la vista: dentro del modal, Cancelar cierra en vez de navegar.
+        $enModal       = true;
+
+        require __DIR__ . '/../views/cotizaciones/formulario.php';
+    }
+
     /** Procesa el POST de la edicion. */
     public function actualizar(): void
     {

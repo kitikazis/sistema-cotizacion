@@ -619,6 +619,45 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
    ===================================================================== */
 .modal-ancho { max-width: 900px; }
 
+/* Casi pantalla completa: el formulario lleva una tabla de 19 columnas y
+   en un modal estrecho seria inusable. */
+.modal-completo {
+    max-width: 1700px;
+    width: 96vw;
+    height: 94vh;
+    display: flex;
+    flex-direction: column;
+}
+.modal-cuerpo-form {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px 0;
+    background: var(--fondo);
+}
+/* Dentro del modal las tarjetas del formulario no necesitan sombra: ya
+   estan sobre una superficie elevada. */
+.modal-cuerpo-form .tarjeta { box-shadow: none; }
+/* La barra de guardar se pega al fondo del area scrolleable del modal. */
+.modal-cuerpo-form .barra-guardar {
+    margin: 18px -20px 0;
+    padding: 14px 20px;
+}
+
+/* Velo de guardado: evita doble envio y da senal de que algo pasa. */
+.modal-velo {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, .78);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--azul);
+    border-radius: 10px;
+    z-index: 5;
+}
+.modal { position: relative; }
+
 .modal-cabecera-neutra {
     background: #fff;
     border-bottom: 1px solid var(--borde);

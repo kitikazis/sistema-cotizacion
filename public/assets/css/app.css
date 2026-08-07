@@ -167,8 +167,12 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 tbody tr:last-child td { border-bottom: none; }
 
 /* La tabla del listado va a sangre dentro de la tarjeta: los bordes
-   laterales de la tarjeta ya la delimitan. */
-.tabla-listado { margin: 0 -24px; width: calc(100% + 48px); }
+   laterales de la tarjeta ya la delimitan.
+   El margen negativo va en el CONTENEDOR, no en la tabla: puesto en la
+   tabla la dejaba 48px mas ancha que su caja y aparecia una barra de
+   scroll horizontal permanente. */
+.tabla-sangre { margin: 0 -24px; }
+.tabla-sangre .tabla-listado { width: 100%; }
 .tabla-listado th:first-child, .tabla-listado td:first-child { padding-left: 24px; }
 .tabla-listado th:last-child,  .tabla-listado td:last-child  { padding-right: 24px; }
 
@@ -380,7 +384,15 @@ tbody tr:last-child td { border-bottom: none; }
 .fijo-firma { line-height: 1.45; }
 .firma-preview { display: block; max-height: 56px; margin-bottom: 2px; }
 .fijo-linea { border-top: 1px solid var(--texto); margin: 0 0 6px; }
-code { background: var(--fondo); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+code {
+    background: var(--fondo);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    /* Sin esto, un token largo como APP_ACCESO_LIBRE=false no puede partirse
+       y fuerza el ancho minimo de la pagina entera en un movil. */
+    overflow-wrap: anywhere;
+}
 
 /* =====================================================================
    Iconos
@@ -803,6 +815,11 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
     font-size: 12.5px;
     text-align: center;
 }
+/* Los elementos flex traen min-width:auto y no se encogen por debajo de su
+   contenido: sin esto el texto largo de la cinta empuja el ancho de toda
+   la pagina y aparece scroll horizontal en movil. */
+.cinta-aviso > span { min-width: 0; }
+.cinta-aviso .ico { flex-shrink: 0; }
 .cinta-aviso code {
     background: rgba(255, 255, 255, .18);
     color: #fff;
@@ -828,7 +845,70 @@ h2 .ico { color: var(--azul); vertical-align: -0.15em; }
 .etiqueta-aceptada  { background: #ecfdf5; color: var(--verde); }
 .etiqueta-rechazada { background: #fef2f2; color: var(--rojo); }
 
-@media (max-width: 900px) {
+/* =====================================================================
+   Responsive
+   =====================================================================
+   La tabla de items del formulario se deja scrollear a proposito: son 19
+   columnas y no hay forma honesta de meterlas en un movil. El listado en
+   cambio si se adapta, escondiendo lo secundario.
+   ===================================================================== */
+
+@media (max-width: 1000px) {
+    .contenedor { margin: 18px auto; padding: 0 16px; }
+    .tarjeta { padding: 18px 16px; }
+    .tabla-sangre { margin: 0 -16px; }
+    .tabla-listado th:first-child, .tabla-listado td:first-child { padding-left: 16px; }
+    .tabla-listado th:last-child,  .tabla-listado td:last-child  { padding-right: 16px; }
+
     .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
     .totales { width: 100%; }
+
+    .barra { flex-wrap: wrap; padding: 10px 16px; row-gap: 8px; }
+    .barra nav { flex-wrap: wrap; }
+}
+
+/* Tablet: sobran el RUC y el conteo de items para reconocer una fila. */
+@media (max-width: 860px) {
+    .tabla-listado th:nth-child(3), .tabla-listado td:nth-child(3),
+    .tabla-listado th:nth-child(5), .tabla-listado td:nth-child(5) { display: none; }
+}
+
+@media (max-width: 640px) {
+    body { font-size: 13.5px; }
+
+    /* Solo queda lo imprescindible: numero, empresa, total y acciones. */
+    .tabla-listado th:nth-child(4), .tabla-listado td:nth-child(4),
+    .tabla-listado th:nth-child(7), .tabla-listado td:nth-child(7) { display: none; }
+
+    .grid-3, .grid-4, .grid { grid-template-columns: 1fr !important; }
+    .grid > div[style*="span 2"] { grid-column: auto !important; }
+
+    .tarjetas-resumen { grid-template-columns: 1fr; gap: 10px; }
+    .campo-busqueda { min-width: 100%; }
+    .barra-busqueda .btn { flex: 1; justify-content: center; }
+
+    .sesion { padding-left: 0; border-left: none; }
+
+    .cinta-aviso { display: block; padding: 8px 14px; font-size: 11.5px; text-align: left; }
+    .cinta-aviso .ico { display: none; }
+    .barra-busqueda { gap: 8px; }
+
+    /* La tarjeta ya no sangra: en pantalla estrecha cada pixel cuenta y el
+       margen negativo dejaba las acciones fuera de la vista. */
+    .tabla-sangre { margin: 0; }
+    .tabla-listado th:first-child, .tabla-listado td:first-child { padding-left: 6px; }
+    .tabla-listado th:last-child,  .tabla-listado td:last-child  { padding-right: 6px; }
+    .tabla-listado th, .tabla-listado td { padding-left: 6px; padding-right: 6px; }
+    .acciones { gap: 2px; }
+    .btn-ico { width: 28px; height: 28px; }
+
+    /* El pie de los modales se apila para que los botones no se aplasten. */
+    .modal-pie { flex-direction: column-reverse; }
+    .modal-pie .btn, .modal-pie form, .modal-pie form .btn { width: 100%; justify-content: center; }
+    .modal-cuerpo-scroll { max-height: 70vh; }
+
+    .barra-guardar { flex-direction: column; align-items: stretch; gap: 10px; }
+    .barra-guardar-acciones .btn { flex: 1; justify-content: center; }
+
+    .det-totales { width: 100%; }
 }

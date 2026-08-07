@@ -159,7 +159,7 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
             <?php endif; ?>
         </div>
     <?php else: ?>
-        <div class="tabla-scroll">
+        <div class="tabla-scroll tabla-sangre">
             <table class="tabla-listado">
                 <thead>
                     <tr>
@@ -251,6 +251,11 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                 <button type="button" class="btn" @click="detalle = null">Cerrar</button>
                 <a class="btn" :href="'index.php?accion=editar&id=' + detalle?.id">
                     <?= icono('lapiz') ?> Editar
+                </a>
+                <?php // Sin descargar=1 el PDF se sirve inline y el navegador lo abre. ?>
+                <a class="btn" target="_blank" rel="noopener"
+                   :href="'index.php?accion=pdf&id=' + detalle?.id">
+                    <?= icono('ojo') ?> Ver PDF
                 </a>
                 <a class="btn btn-primario" :href="'index.php?accion=pdf&descargar=1&id=' + detalle?.id">
                     <?= icono('descargar') ?> Descargar PDF

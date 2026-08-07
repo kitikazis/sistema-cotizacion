@@ -78,11 +78,32 @@ function cerrarSesion(): void
 }
 
 /**
+ * ¿Esta abierta la puerta sin login?
+ *
+ * Se controla con 'acceso_libre' en config/app.php. Es un modo de prueba:
+ * mientras este activo la aplicacion muestra un aviso rojo permanente.
+ */
+function accesoLibre(): bool
+{
+    static $valor = null;
+
+    if ($valor === null) {
+        $archivo = __DIR__ . '/../config/app.php';
+        $config  = is_file($archivo) ? require $archivo : [];
+
+        // Ante la ausencia del archivo se exige login, que es el lado seguro.
+        $valor = !empty($config['acceso_libre']);
+    }
+
+    return $valor;
+}
+
+/**
  * Corta la ejecucion si no hay sesion, recordando a donde queria ir.
  */
 function requiereAutenticacion(): void
 {
-    if (estaAutenticado()) {
+    if (accesoLibre() || estaAutenticado()) {
         return;
     }
 

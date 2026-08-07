@@ -82,8 +82,11 @@ body {
 label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; color: var(--tenue); }
 
 /* Enumerar cada type es fragil: uno nuevo se queda sin estilo y sale
-   angosto. Se excluyen solo los que no son campos de texto. */
-input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+   angosto. Se excluyen solo los que no son campos de texto.
+   Va dentro de :where() para que la regla no aporte especificidad: con
+   :not() suelto sumaba (0,4,1) y le ganaba a ajustes puntuales como el
+   padding de la lupa del buscador. */
+input:where(:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])),
 select, textarea {
     width: 100%;
     padding: 7px 9px;
@@ -296,7 +299,9 @@ h2 .ico { margin-right: 6px; color: var(--azul); vertical-align: -0.15em; }
     pointer-events: none;
     display: flex;
 }
-.campo-busqueda input { padding-left: 32px; }
+/* Especificidad alta a proposito: la regla general de inputs usa varios
+   :not() y le ganaba a este padding, dejando la lupa encima del texto. */
+.campo-busqueda input[type="search"] { padding-left: 32px; }
 
 .panel-filtros {
     margin-top: 16px;
@@ -352,6 +357,26 @@ h2 .ico { margin-right: 6px; color: var(--azul); vertical-align: -0.15em; }
 }
 .pantalla-login .aviso { font-size: 12.5px; }
 .pantalla-login .pie { margin-top: 18px; padding: 0; }
+
+/* Cinta de aviso del modo prueba. Deliberadamente molesta: esta para que
+   nadie deje el acceso abierto por olvido. */
+.cinta-aviso {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #b91c1c;
+    color: #fff;
+    padding: 8px 20px;
+    font-size: 12.5px;
+    text-align: center;
+}
+.cinta-aviso code {
+    background: rgba(255, 255, 255, .18);
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
 
 /* Usuario y salida en la barra superior */
 .sesion {

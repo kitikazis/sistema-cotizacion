@@ -23,15 +23,20 @@ RedirectMatch 404 ^/(composer\.(json|lock)|README\.md|\.git)
 </FilesMatch>
 
 # ---------------------------------------------------------------------
-# Forzar HTTPS. Requiere tener el certificado activo en cPanel
-# (AutoSSL / Let's Encrypt); si todavia no lo esta, comentar este bloque
-# o el sitio quedara en un bucle de redirecciones.
+# Forzar HTTPS.
+#
+# DESACTIVADO hasta que el certificado este emitido. Con AutoSSL todavia
+# sin correr, este bloque deja el sitio en un bucle de redirecciones.
+#
+# PARA ACTIVARLO: en cPanel > SSL/TLS Status, ejecutar AutoSSL sobre
+# cotizacion.enlix.pe, comprobar que https:// abre bien, y recien ahi
+# quitar los "#" de las cuatro lineas de abajo.
 # ---------------------------------------------------------------------
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{HTTPS} !=on
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
-</IfModule>
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} !=on
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+# </IfModule>
 
 # ---------------------------------------------------------------------
 # Sin listados de directorio

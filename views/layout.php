@@ -30,9 +30,25 @@
                     <?= campoCsrf() ?>
                     <button type="submit" class="btn-ico" title="Cerrar sesión"><?= icono('volver') ?></button>
                 </form>
+            <?php elseif (accesoLibre()): ?>
+                <a class="sesion" href="<?= e(url('login')) ?>">
+                    <?= icono('usuario', 14, 'ico-tenue') ?> Iniciar sesión
+                </a>
             <?php endif; ?>
         </nav>
     </header>
+
+    <?php if (accesoLibre()): ?>
+        <!-- Aviso permanente: que nadie se olvide de cerrar la puerta. -->
+        <div class="cinta-aviso">
+            <?= icono('alerta', 15) ?>
+            <span>
+                <strong>Modo prueba: acceso sin login.</strong>
+                Cualquiera con la URL ve costos, márgenes y clientes.
+                Para cerrarlo, poner <code>'acceso_libre' =&gt; false</code> en <code>config/app.php</code>.
+            </span>
+        </div>
+    <?php endif; ?>
 
     <main class="contenedor">
         <?= $contenido ?>

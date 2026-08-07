@@ -12,6 +12,10 @@
 $opciones  = $empresaConfig['opciones'];
 $editando  = $cotizacion !== null;
 
+// Lo lee views/layout.php: esta pantalla necesita todo el ancho por la
+// tabla de items.
+$anchoCompleto = true;
+
 /** Devuelve el valor guardado o el default cuando se esta creando. */
 $val = static function (string $campo, $default = '') use ($cotizacion) {
     return $cotizacion[$campo] ?? $default;

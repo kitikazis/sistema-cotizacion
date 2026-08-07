@@ -50,7 +50,8 @@
         </div>
     <?php endif; ?>
 
-    <main class="contenedor">
+    <?php // El formulario pide ancho completo por su tabla de 19 columnas. ?>
+    <main class="contenedor <?= !empty($anchoCompleto) ? 'contenedor-ancho' : '' ?>">
         <?= $contenido ?>
     </main>
 

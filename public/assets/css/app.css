@@ -2,14 +2,21 @@
 
 :root {
     --azul: #1e40af;
+    --azul-vivo: #2563eb;
     --azul-claro: #eff6ff;
-    --texto: #1f2937;
+    --texto: #111827;
     --tenue: #6b7280;
     --borde: #e5e7eb;
-    --fondo: #f9fafb;
+    --fondo: #f6f7f9;
     --verde: #059669;
     --rojo: #dc2626;
     --ambar: #b45309;
+
+    /* Sombras suaves: dan profundidad sin el efecto "caja pesada" que
+       produce un borde marcado en cada tarjeta. */
+    --sombra-1: 0 1px 2px rgba(16, 24, 40, .05);
+    --sombra-2: 0 1px 3px rgba(16, 24, 40, .07), 0 1px 2px rgba(16, 24, 40, .04);
+    --sombra-3: 0 4px 12px rgba(16, 24, 40, .08);
 }
 
 * { box-sizing: border-box; }
@@ -29,19 +36,49 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 12px 24px;
+    padding: 12px 26px;
     background: #fff;
     border-bottom: 1px solid var(--borde);
+    /* Fija: en listados largos deja la accion principal siempre a mano. */
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    box-shadow: var(--sombra-1);
 }
 
-.marca { font-weight: 700; color: var(--azul); text-decoration: none; font-size: 16px; }
-.barra nav { display: flex; align-items: center; gap: 16px; }
-.barra nav a { color: var(--tenue); text-decoration: none; }
-.barra nav a:hover { color: var(--azul); }
+.marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--azul);
+    text-decoration: none;
+    font-size: 15.5px;
+    letter-spacing: -.01em;
+}
+.barra nav { display: flex; align-items: center; gap: 14px; }
+.barra nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--tenue);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+.barra nav a:hover { color: var(--azul); background: var(--azul-claro); }
+.barra nav a.btn-primario { color: #fff; }
+.barra nav a.btn-primario:hover { color: #fff; background: #1e3a8a; }
 
-/* 1700px porque la tabla de items tiene 18 columnas; con 1400 el Total linea
-   quedaba siempre fuera de pantalla. */
-.contenedor { max-width: 1700px; margin: 24px auto; padding: 0 24px; }
+/* El listado se lee mejor contenido: en un monitor ancho, estirar 8 columnas
+   a 1700px deja huecos enormes y obliga a barrer la vista de lado a lado. */
+.contenedor { max-width: 1280px; margin: 26px auto; padding: 0 24px; }
+
+/* El formulario si necesita todo el ancho: su tabla tiene 19 columnas y con
+   menos espacio el Total linea queda fuera de pantalla. */
+.contenedor-ancho { max-width: 1700px; }
+
 .pie { text-align: center; color: var(--tenue); padding: 24px; font-size: 12px; }
 
 /* --- Botones --- */
@@ -67,12 +104,25 @@ body {
 /* --- Tarjetas --- */
 .tarjeta {
     background: #fff;
-    border: 1px solid var(--borde);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
+    border: 1px solid #eceef1;
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    box-shadow: var(--sombra-2);
 }
-.tarjeta h2 { margin: 0 0 16px; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: var(--tenue); }
+.tarjeta h2 {
+    display: flex;
+    align-items: center;
+    /* En flex los nodos de texto en blanco no se renderizan, asi que sin
+       gap el titulo queda pegado a la aclaracion: "ITEMS— las celdas...". */
+    gap: 6px;
+    margin: 0 0 18px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--tenue);
+    font-weight: 700;
+}
 
 /* --- Formularios --- */
 .grid { display: grid; gap: 14px; }
@@ -103,10 +153,24 @@ textarea { resize: vertical; min-height: 70px; }
 
 /* --- Tablas --- */
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--borde); }
-th { background: var(--fondo); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--tenue); font-weight: 700; white-space: nowrap; }
+th, td { padding: 7px 8px; text-align: left; border-bottom: 1px solid #eef0f3; }
+th {
+    background: var(--fondo);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--tenue);
+    font-weight: 700;
+    white-space: nowrap;
+}
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-tbody tr:hover { background: #fcfcfd; }
+tbody tr:last-child td { border-bottom: none; }
+
+/* La tabla del listado va a sangre dentro de la tarjeta: los bordes
+   laterales de la tarjeta ya la delimitan. */
+.tabla-listado { margin: 0 -24px; width: calc(100% + 48px); }
+.tabla-listado th:first-child, .tabla-listado td:first-child { padding-left: 24px; }
+.tabla-listado th:last-child,  .tabla-listado td:last-child  { padding-right: 24px; }
 
 .tabla-scroll { overflow-x: auto; position: relative; }
 .tabla-items input, .tabla-items select { padding: 5px 6px; font-size: 12px; min-width: 58px; }
@@ -327,7 +391,7 @@ code { background: var(--fondo); padding: 1px 5px; border-radius: 3px; font-size
 .btn .ico { margin-right: 5px; }
 .btn .ico:only-child { margin-right: 0; }
 label .ico { margin-right: 3px; vertical-align: -0.15em; }
-h2 .ico { margin-right: 6px; color: var(--azul); vertical-align: -0.15em; }
+h2 .ico { color: var(--azul); vertical-align: -0.15em; }
 .con-ico { display: inline-flex; align-items: center; gap: 6px; }
 [x-cloak] { display: none !important; }
 
@@ -362,26 +426,54 @@ h2 .ico { margin-right: 6px; color: var(--azul); vertical-align: -0.15em; }
     margin-bottom: 20px;
 }
 .resumen {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 13px;
     background: #fff;
-    border: 1px solid var(--borde);
-    border-radius: 8px;
-    padding: 14px 16px;
+    border: 1px solid #eceef1;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--sombra-2);
+    overflow: hidden;
 }
+/* Franja de color a la izquierda: distingue las tres metricas de un
+   vistazo sin recargar la tarjeta. */
+.resumen::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--azul-vivo);
+}
+.resumen:nth-child(2)::before { background: var(--verde); }
+.resumen:nth-child(3)::before { background: #7c3aed; }
+
 .resumen-ico {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
     background: var(--azul-claro);
     color: var(--azul);
+    flex-shrink: 0;
 }
-.resumen-valor { display: block; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.resumen-etq { display: block; font-size: 11px; color: var(--tenue); }
+.resumen:nth-child(2) .resumen-ico { background: #ecfdf5; color: var(--verde); }
+.resumen:nth-child(3) .resumen-ico { background: #f5f3ff; color: #7c3aed; }
+
+.resumen-valor {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+    line-height: 1.2;
+}
+.resumen-etq { display: block; font-size: 11px; color: var(--tenue); margin-top: 2px; }
 
 /* =====================================================================
    Buscador y filtros

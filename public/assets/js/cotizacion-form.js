@@ -29,16 +29,19 @@ document.addEventListener('alpine:init', () => {
         },
 
         itemVacio() {
+            // Los costos arrancan vacios, no en cero: una fila nueva llena de
+            // ceros se lee como ruido y obliga a borrarlos para escribir. El
+            // calculo trata la cadena vacia como 0, asi que no cambia nada.
             return {
                 codigo: '',
                 marca: '',
                 descripcion: '',
                 cantidad: 1,
-                precio: 0,
-                licencia_so: 0,
-                delivery: 0,
-                embalaje: 0,
-                envio: 0,
+                precio: '',
+                licencia_so: '',
+                delivery: '',
+                embalaje: '',
+                envio: '',
                 aplica_detraccion: false,
                 aplica_retencion: false,
                 porcentaje_ganancia: 0.10,

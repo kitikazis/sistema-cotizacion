@@ -201,7 +201,7 @@ $configAlpine = [
                             <td><input type="text" :name="`items[${i}][marca]`" x-model="item.marca"></td>
                             <td><input type="text" :name="`items[${i}][descripcion]`" x-model="item.descripcion" required style="min-width:150px"></td>
 
-                            <td><input type="number" step="any" min="0" :name="`items[${i}][precio]`" x-model="item.precio"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][precio]`" x-model="item.precio"></td>
 
                             <td class="calculado" x-text="simbolo + ' ' + f(calcular(item).ir)"></td>
                             <td class="calculado" x-text="simbolo + ' ' + f(calcular(item).igv)"></td>
@@ -213,10 +213,10 @@ $configAlpine = [
                                 </label>
                             </td>
 
-                            <td><input type="number" step="any" min="0" :name="`items[${i}][licencia_so]`" x-model="item.licencia_so"></td>
-                            <td><input type="number" step="any" min="0" :name="`items[${i}][delivery]`" x-model="item.delivery"></td>
-                            <td><input type="number" step="any" min="0" :name="`items[${i}][embalaje]`" x-model="item.embalaje"></td>
-                            <td><input type="number" step="any" min="0" :name="`items[${i}][envio]`" x-model="item.envio"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][licencia_so]`" x-model="item.licencia_so"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][delivery]`" x-model="item.delivery"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][embalaje]`" x-model="item.embalaje"></td>
+                            <td><input type="number" step="any" min="0" placeholder="0.00" class="dinero" :name="`items[${i}][envio]`" x-model="item.envio"></td>
 
                             <td class="calculado">
                                 <select :name="`items[${i}][porcentaje_ganancia]`" x-model.number="item.porcentaje_ganancia">
@@ -253,18 +253,26 @@ $configAlpine = [
             <button type="button" class="btn" @click="agregarItem()"><?= icono('mas') ?> Agregar ítem</button>
         </p>
 
-        <div class="totales">
-            <div>
-                <span>Subtotal (base imponible)</span>
-                <strong><span x-text="simbolo"></span> <span x-text="f(clienteSubtotal)"></span></strong>
+        <div class="panel-totales">
+            <div class="panel-totales-nota">
+                <?= icono('ojo', 14, 'ico-tenue') ?>
+                Esto es lo que verá el cliente en el PDF. El desglose interno
+                no aparece ahí.
             </div>
-            <div>
-                <span>I.G.V (18%)</span>
-                <strong><span x-text="simbolo"></span> <span x-text="f(clienteIgv)"></span></strong>
-            </div>
-            <div class="grande">
-                <span>Total</span>
-                <span><span x-text="simbolo"></span> <span x-text="f(clienteTotal)"></span></span>
+
+            <div class="totales">
+                <div>
+                    <span>Subtotal (base imponible)</span>
+                    <strong><span x-text="simbolo"></span> <span x-text="f(clienteSubtotal)"></span></strong>
+                </div>
+                <div>
+                    <span>I.G.V (18%)</span>
+                    <strong><span x-text="simbolo"></span> <span x-text="f(clienteIgv)"></span></strong>
+                </div>
+                <div class="grande">
+                    <span>Total</span>
+                    <span><span x-text="simbolo"></span> <span x-text="f(clienteTotal)"></span></span>
+                </div>
             </div>
         </div>
     </div>
@@ -341,12 +349,22 @@ $configAlpine = [
         </p>
     </div>
 
-    <p>
-        <button type="submit" class="btn btn-primario">
-            <?= icono('guardar') ?> <?= $editando ? 'Actualizar cotización' : 'Guardar cotización' ?>
-        </button>
-        <a class="btn" href="<?= e($editando ? url('ver', ['id' => $cotizacion['id']]) : url()) ?>">
-            <?= icono('equis') ?> Cancelar
-        </a>
-    </p>
+    <!-- Barra fija: el formulario es largo y el boton de guardar quedaba a
+         varias pantallas de scroll. Ademas repite el total, que es el dato
+         que se mira antes de confirmar. -->
+    <div class="barra-guardar">
+        <div class="barra-guardar-total">
+            <span>Total de la cotización</span>
+            <strong><span x-text="simbolo"></span> <span x-text="f(clienteTotal)"></span></strong>
+        </div>
+
+        <div class="barra-guardar-acciones">
+            <a class="btn" href="<?= e($editando ? url('ver', ['id' => $cotizacion['id']]) : url()) ?>">
+                <?= icono('equis') ?> Cancelar
+            </a>
+            <button type="submit" class="btn btn-primario">
+                <?= icono('guardar') ?> <?= $editando ? 'Actualizar cotización' : 'Guardar cotización' ?>
+            </button>
+        </div>
+    </div>
 </form>

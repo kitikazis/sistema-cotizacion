@@ -129,6 +129,26 @@ class CotizacionController
         redirigir(url('ver', ['id' => $id, 'ok' => 1]));
     }
 
+    /**
+     * Fragmento HTML del detalle, para el modal del listado.
+     *
+     * Devuelve solo el trozo, sin layout: se carga por fetch cuando el
+     * usuario abre el modal. Asi el listado no arrastra los items de todas
+     * las cotizaciones en cada carga.
+     */
+    public function detalle(): void
+    {
+        $cotizacion = Cotizacion::obtener((int) ($_GET['id'] ?? 0));
+
+        if ($cotizacion === null) {
+            http_response_code(404);
+            exit('<p class="aviso aviso-error">Cotización no encontrada.</p>');
+        }
+
+        header('Content-Type: text/html; charset=UTF-8');
+        require __DIR__ . '/../views/cotizaciones/_detalle.php';
+    }
+
     /** Detalle con el desglose completo. */
     public function ver(): void
     {

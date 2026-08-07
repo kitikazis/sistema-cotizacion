@@ -120,7 +120,31 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
 </div>
 
 <!-- ============ Tabla ============ -->
-<div class="tarjeta" x-data="{ porEliminar: null }">
+<div class="tarjeta" x-data="{
+        porEliminar: null,
+        detalle: null,
+        html: '',
+        cargando: false,
+
+        async verDetalle(c) {
+            this.detalle = c;
+            this.html = '';
+            this.cargando = true;
+
+            try {
+                const r = await fetch('index.php?accion=detalle&id=' + c.id, {
+                    headers: { 'X-Requested-With': 'fetch' }
+                });
+                this.html = r.ok
+                    ? await r.text()
+                    : '<p class=&quot;aviso aviso-error&quot;>No se pudo cargar el detalle.</p>';
+            } catch (e) {
+                this.html = '<p class=&quot;aviso aviso-error&quot;>Sin conexión con el servidor.</p>';
+            }
+
+            this.cargando = false;
+        }
+     }">
     <h2><?= icono('documento', 15) ?> Cotizaciones emitidas</h2>
 
     <?php if ($cotizaciones === []): ?>
@@ -179,7 +203,10 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                         <td><span class="etiqueta etiqueta-<?= e($c['estado']) ?>"><?= e($estados[$c['estado']] ?? $c['estado']) ?></span></td>
                         <td>
                             <div class="acciones">
-                                <a class="btn-ico" title="Ver detalle" href="<?= e(url('ver', ['id' => $c['id']])) ?>"><?= icono('ojo') ?></a>
+                                <button type="button" class="btn-ico" title="Ver detalle"
+                                        @click="verDetalle(<?= e($paraModal) ?>)">
+                                    <?= icono('ojo') ?>
+                                </button>
                                 <a class="btn-ico" title="Editar" href="<?= e(url('editar', ['id' => $c['id']])) ?>"><?= icono('lapiz') ?></a>
                                 <a class="btn-ico" title="Descargar PDF" href="<?= e(url('pdf', ['id' => $c['id'], 'descargar' => 1])) ?>"><?= icono('descargar') ?></a>
                                 <button type="button" class="btn-ico btn-ico-peligro" title="Eliminar"
@@ -194,6 +221,43 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
             </table>
         </div>
     <?php endif; ?>
+
+    <!-- ============ Detalle de la cotización ============ -->
+    <div class="modal-fondo" style="display:none" x-show="detalle" x-cloak x-transition.opacity
+         @click.self="detalle = null"
+         @keydown.escape.window="detalle = null"
+         role="dialog" aria-modal="true">
+
+        <div class="modal modal-ancho" x-show="detalle" x-transition>
+            <div class="modal-cabecera modal-cabecera-neutra">
+                <span class="modal-ico modal-ico-azul"><?= icono('documento', 20) ?></span>
+                <div>
+                    <strong>Cotización N° <span x-text="detalle?.numero"></span></strong>
+                    <span x-text="detalle?.empresa"></span>
+                </div>
+                <button type="button" class="modal-cerrar" @click="detalle = null" title="Cerrar">
+                    <?= icono('equis', 18) ?>
+                </button>
+            </div>
+
+            <div class="modal-cuerpo modal-cuerpo-scroll">
+                <template x-if="cargando">
+                    <p class="det-cargando">Cargando detalle…</p>
+                </template>
+                <div x-show="!cargando" x-html="html"></div>
+            </div>
+
+            <div class="modal-pie">
+                <button type="button" class="btn" @click="detalle = null">Cerrar</button>
+                <a class="btn" :href="'index.php?accion=editar&id=' + detalle?.id">
+                    <?= icono('lapiz') ?> Editar
+                </a>
+                <a class="btn btn-primario" :href="'index.php?accion=pdf&descargar=1&id=' + detalle?.id">
+                    <?= icono('descargar') ?> Descargar PDF
+                </a>
+            </div>
+        </div>
+    </div>
 
     <!-- ============ Confirmación de borrado ============ -->
     <!-- El display:none va en linea a proposito: si el navegador sirviera un

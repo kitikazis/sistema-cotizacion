@@ -120,7 +120,7 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
 </div>
 
 <!-- ============ Tabla ============ -->
-<div class="tarjeta">
+<div class="tarjeta" x-data="{ porEliminar: null }">
     <h2><?= icono('documento', 15) ?> Cotizaciones emitidas</h2>
 
     <?php if ($cotizaciones === []): ?>
@@ -151,16 +151,30 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                 </thead>
                 <tbody>
                 <?php foreach ($cotizaciones as $c): ?>
+                    <?php
+                        // Los datos que necesita el modal, serializados a un
+                        // objeto JS. json_encode escapa comillas y acentos:
+                        // una razon social con apostrofe rompería el atributo.
+                        $paraModal = json_encode([
+                            'id'      => (int) $c['id'],
+                            'numero'  => $c['numero'],
+                            'empresa' => $c['razon_social'],
+                            'ruc'     => $c['ruc'] ?? '—',
+                            'fecha'   => date('d/m/Y', strtotime((string) $c['fecha_emision'])),
+                            'items'   => (int) $c['items'],
+                            'total'   => simboloMoneda((string) $c['moneda']) . ' ' . money($c['cliente_total']),
+                        ], JSON_UNESCAPED_UNICODE);
+                    ?>
                     <tr>
-                        <td><strong><?= e($c['numero']) ?></strong></td>
+                        <td><span class="folio"><?= e($c['numero']) ?></span></td>
                         <td>
                             <span class="con-ico"><?= icono('empresa', 14, 'ico-tenue') ?> <?= e($c['razon_social']) ?></span>
                         </td>
-                        <td class="mono"><?= e($c['ruc'] ?? '—') ?></td>
-                        <td><?= e(date('d/m/Y', strtotime((string) $c['fecha_emision']))) ?></td>
-                        <td class="num"><?= (int) $c['items'] ?></td>
+                        <td class="mono tenue"><?= e($c['ruc'] ?? '—') ?></td>
+                        <td class="tenue"><?= e(date('d/m/Y', strtotime((string) $c['fecha_emision']))) ?></td>
+                        <td class="num tenue"><?= (int) $c['items'] ?></td>
                         <td class="num">
-                            <strong><?= e(simboloMoneda((string) $c['moneda'])) ?> <?= money($c['cliente_total']) ?></strong>
+                            <strong class="monto"><?= e(simboloMoneda((string) $c['moneda'])) ?> <?= money($c['cliente_total']) ?></strong>
                         </td>
                         <td><span class="etiqueta etiqueta-<?= e($c['estado']) ?>"><?= e($estados[$c['estado']] ?? $c['estado']) ?></span></td>
                         <td>
@@ -168,12 +182,10 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
                                 <a class="btn-ico" title="Ver detalle" href="<?= e(url('ver', ['id' => $c['id']])) ?>"><?= icono('ojo') ?></a>
                                 <a class="btn-ico" title="Editar" href="<?= e(url('editar', ['id' => $c['id']])) ?>"><?= icono('lapiz') ?></a>
                                 <a class="btn-ico" title="Descargar PDF" href="<?= e(url('pdf', ['id' => $c['id'], 'descargar' => 1])) ?>"><?= icono('descargar') ?></a>
-                                <form method="post" action="<?= e(url('eliminar')) ?>"
-                                      onsubmit="return confirm('¿Eliminar la cotización N° <?= e($c['numero']) ?>?')">
-                                    <?= campoCsrf() ?>
-                                    <input type="hidden" name="id" value="<?= (int) $c['id'] ?>">
-                                    <button type="submit" class="btn-ico btn-ico-peligro" title="Eliminar"><?= icono('basura') ?></button>
-                                </form>
+                                <button type="button" class="btn-ico btn-ico-peligro" title="Eliminar"
+                                        @click="porEliminar = <?= e($paraModal) ?>">
+                                    <?= icono('basura') ?>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -182,4 +194,69 @@ $estados = ['borrador' => 'Borrador', 'emitida' => 'Emitida', 'aceptada' => 'Ace
             </table>
         </div>
     <?php endif; ?>
+
+    <!-- ============ Confirmación de borrado ============ -->
+    <div class="modal-fondo" x-show="porEliminar" x-cloak x-transition.opacity
+         @click.self="porEliminar = null"
+         @keydown.escape.window="porEliminar = null"
+         role="dialog" aria-modal="true" aria-labelledby="titulo-eliminar">
+
+        <div class="modal" x-show="porEliminar" x-transition>
+            <div class="modal-cabecera">
+                <span class="modal-ico"><?= icono('alerta', 20) ?></span>
+                <div>
+                    <strong id="titulo-eliminar">Eliminar cotización</strong>
+                    <span>Esta acción no se puede deshacer.</span>
+                </div>
+            </div>
+
+            <div class="modal-cuerpo">
+                <p>Se va a eliminar de forma permanente:</p>
+
+                <table class="modal-datos">
+                    <tr>
+                        <td>Número</td>
+                        <td><strong x-text="porEliminar?.numero"></strong></td>
+                    </tr>
+                    <tr>
+                        <td>Empresa</td>
+                        <td><strong x-text="porEliminar?.empresa"></strong></td>
+                    </tr>
+                    <tr>
+                        <td>RUC</td>
+                        <td x-text="porEliminar?.ruc"></td>
+                    </tr>
+                    <tr>
+                        <td>Emisión</td>
+                        <td x-text="porEliminar?.fecha"></td>
+                    </tr>
+                    <tr>
+                        <td>Total</td>
+                        <td><strong x-text="porEliminar?.total"></strong></td>
+                    </tr>
+                </table>
+
+                <p class="pista" style="margin-top:12px">
+                    También se borrarán sus
+                    <strong x-text="porEliminar?.items"></strong>
+                    <span x-text="porEliminar?.items === 1 ? 'ítem' : 'ítems'"></span>.
+                    El cliente se conserva, porque puede tener otras cotizaciones.
+                </p>
+            </div>
+
+            <div class="modal-pie">
+                <button type="button" class="btn" @click="porEliminar = null">
+                    <?= icono('equis') ?> Cancelar
+                </button>
+
+                <form method="post" action="<?= e(url('eliminar')) ?>">
+                    <?= campoCsrf() ?>
+                    <input type="hidden" name="id" :value="porEliminar?.id">
+                    <button type="submit" class="btn btn-peligro-solido">
+                        <?= icono('basura') ?> Sí, eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
